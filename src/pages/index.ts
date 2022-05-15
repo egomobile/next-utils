@@ -24,7 +24,13 @@ import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../
  * or the value, which returns it.
  */
 export type DefaultStaticResultValueGetter<T> =
-    (context: IDefaultStaticResultValueGetterContext) => Nilable<T> | PromiseLike<Nilable<T>>;
+    ((context: IDefaultStaticResultValueGetterContext) => Nilable<T | PromiseLike<Nilable<T>>>);
+
+/**
+ * A possible value for something that returns a default value
+ * for a prop for a static rendered page on a client.
+ */
+export type DefaultStaticResultValue<T> = T | DefaultStaticResultValueGetter<T>;
 
 /**
  * Options for 'createWithServerSideProps()' function.
@@ -124,22 +130,22 @@ export interface IWithStaticPropsDefaults {
      * The global default value for 'notFound' prop of
      * a 'GetStaticProps' result.
      */
-    notFound?: Nilable<DefaultStaticResultValueGetter<boolean>>;
+    notFound?: Nilable<DefaultStaticResultValue<boolean>>;
     /**
      * The global default value for 'props' prop of
      * a 'GetStaticProps' result.
      */
-    props?: Nilable<DefaultStaticResultValueGetter<any>>;
+    props?: Nilable<DefaultStaticResultValue<any>>;
     /**
       * The global default value for 'redirect' prop of
       * a 'GetStaticProps' result.
       */
-    redirect?: Nilable<DefaultStaticResultValueGetter<Redirect>>;
+    redirect?: Nilable<DefaultStaticResultValue<Redirect>>;
     /**
       * The global default value for 'revalidate' prop of
       * a 'GetStaticProps' result.
       */
-    revalidate?: Nilable<DefaultStaticResultValueGetter<RevalidateProp>>;
+    revalidate?: Nilable<DefaultStaticResultValue<RevalidateProp>>;
 }
 
 /**
