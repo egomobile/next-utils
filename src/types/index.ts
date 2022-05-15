@@ -110,6 +110,11 @@ export type RequestFailedHandler<
     (context: IRequestFailedHandlerContext<TRequest, TResponse>) => any;
 
 /**
+ * A possible value for a 'revalidate' prop.
+ */
+export type RevalidateProp = number | boolean;
+
+/**
  * A function, which checks for a valid (user) session.
  *
  * @param {ISessionCheckerContext<TSession>} context The current exeuction context.
