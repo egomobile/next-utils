@@ -13,20 +13,70 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { compileExpression } from "filtrex";
 import { asAsync, isNil } from "@egomobile/nodelike-utils";
 import type { Nilable } from "@egomobile/types";
-import type { SessionChecker, SessionPermissionChecker, SessionPermissionCheckerPredicate } from "../types";
+import type { OverwritableFilterExpressionFunctions, SessionChecker, SessionPermissionChecker, SessionPermissionCheckerPredicate } from "../types";
+import { createFilterExpressionFunctions } from ".";
 
-export function toSessionPermissionCheckPredicateSafe(
-    checker: Nilable<SessionPermissionChecker>,
-): SessionPermissionCheckerPredicate {
+export interface IToSessionPermissionCheckPredicateSafeOptions {
+    checker: Nilable<SessionPermissionChecker>;
+    customFilterExpressionFunctions: Nilable<OverwritableFilterExpressionFunctions>;
+}
+
+export function toSessionPermissionCheckPredicateSafe({
+    checker,
+    customFilterExpressionFunctions
+}: IToSessionPermissionCheckPredicateSafeOptions): SessionPermissionCheckerPredicate {
     if (isNil(checker)) {
         checker = async () => {
             return true;
         };
     };
 
-    return checker;
+    if (typeof checker === "function") {
+        return asAsync(checker);
+    }
+
+    const filterPredicate = compileExpression(checker, {
+        ...createFilterExpressionFunctions({
+            "overwrites": customFilterExpressionFunctions
+        })
+    });
+
+    return async ({ request }) => {
+        try {
+            const query: Record<string, string> = {};
+
+            const qMark = request.url?.indexOf("?") ?? -1;
+            if (qMark > -1) {
+                // s. https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+
+                const pl = /\+/g;  // Regex for replacing addition symbol with a space
+                const search = /([^&=]+)=?([^&]*)/g;
+                const decode = (s: string) => {
+                    return decodeURIComponent((s ?? "").replace(pl, " "));
+                };
+                const searchParams = request.url!.substring(qMark + 1);
+
+                let match: Nilable<RegExpExecArray>;
+                while (match = search.exec(searchParams)) {
+                    query[decode(match[1])] = decode(match[2]);
+                }
+            }
+
+            return filterPredicate({
+                "headers": request.headers,
+                "method": request.method ?? "GET",
+                "params": request.params ?? {},
+                query,
+                "url": request.url ?? ""
+            });
+        }
+        catch {
+            return false;
+        }
+    };
 }
 
 

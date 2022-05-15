@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import joi from "joi";
 import next from "next";
 import url from "url";
 import { createServer, IHttpServer } from "@egomobile/http-server";
@@ -126,8 +127,6 @@ export async function setupHTTPServer(
     };
 }
 
-export * from "./api";
-export * from "./pages";
 export {
     CheckIfShouldTickPredicate,
     IJobConfig,
@@ -136,3 +135,26 @@ export {
     DebugAction as JobDebugAction,
     DebugIcon as JobDebugIcon
 } from "@egomobile/jobs";
+export {
+    AlternativesSchema,
+    AnySchema,
+    ArraySchema,
+    BinarySchema,
+    BooleanSchema,
+    DateSchema, ExtensionBoundSchema, FunctionSchema,
+    isSchema, LinkSchema,
+    NumberSchema,
+    ObjectPropertiesSchema,
+    ObjectSchema, PartialSchemaMap, Schema, SchemaFunction, SchemaInternals, SchemaLike,
+    SchemaLikeWithoutArray,
+    SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
+} from "joi";
+
+export * from "./api";
+export * from "./pages";
+export * from "./utils";
+
+/**
+ * Alias for 'joi' module.
+ */
+export const schema = joi;

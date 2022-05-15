@@ -54,6 +54,8 @@
         "@egomobile/nodelike-utils": "^0.2.2",
         "@egomobile/types": "^2.0.0",
         "@types/node": "14.18.18",
+        "filtrex": "3.0.0",
+        "joi": "17.6.0",
         "sanitize-filename": "1.6.3"
     },
     "devDependencies": {

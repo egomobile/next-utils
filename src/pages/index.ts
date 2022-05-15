@@ -16,7 +16,8 @@
 import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
 import type { Nilable, Optional } from "@egomobile/types";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult, GetStaticProps, GetStaticPropsContext, GetStaticPropsResult, Redirect } from "next";
-import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, RequestErrorHandler, RequestFailedHandler, RevalidateProp, SessionChecker, SessionPermissionChecker } from "../types";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RevalidateProp, SessionChecker, SessionPermissionChecker } from "../types";
+import { createFilterExpressionFunctions } from "../utils";
 import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 
 /**
@@ -40,6 +41,10 @@ export interface ICreateWithServerSidePropsOptions<TSession extends any = any> {
      * A custom function, which checks for a session.
      */
     checkSession?: Nilable<SessionChecker<TSession>>;
+    /**
+     * A list of global, custom filter functions, which should be added, removed or updated.
+     */
+    customFilterFunctions?: Nilable<OverwritableFilterExpressionFunctions>;
     /**
      * A custom function, which handles 500 Internal Server Error responses.
      */
@@ -92,6 +97,10 @@ export interface IWithServerSidePropsOptions<TSession extends any = any> {
      * A custom function, which checks for enough permission in a session.
      */
     checkPermission?: Nilable<SessionPermissionChecker<TSession>>;
+    /**
+     * A list of global, custom filter functions, which should be added, removed or updated.
+     */
+    customFilterFunctions?: Nilable<OverwritableFilterExpressionFunctions>;
 }
 
 /**
@@ -343,13 +352,23 @@ export function createWithStaticProps(options?: Nilable<ICreateWithStaticPropsOp
  * @returns {WithServerSideProps} The new middleware.
  */
 export function createWithServerSideProps<TSession extends any = any>(
-    options: ICreateWithServerSidePropsOptions<TSession> = {}
+    options?: Nilable<ICreateWithServerSidePropsOptions<TSession>>
 ): WithServerSideProps<TSession> {
-    const checkSession = toSessionCheckerSafe(options.checkSession);
+    if (!isNil(options?.customFilterFunctions)) {
+        if (typeof options?.customFilterFunctions !== "object") {
+            throw new TypeError("options.customFilterFunctions must be of type object");
+        }
+    }
 
-    const onError = toRequestErrorHandlerSafe(options.onError);
-    const onForbidden = toRequestFailedHandlerSafe(options.onForbidden);
-    const onUnauthorized = toRequestFailedHandlerSafe(options.onUnauthorized);
+    const checkSession = toSessionCheckerSafe(options?.checkSession);
+
+    const onError = toRequestErrorHandlerSafe(options?.onError);
+    const onForbidden = toRequestFailedHandlerSafe(options?.onForbidden);
+    const onUnauthorized = toRequestFailedHandlerSafe(options?.onUnauthorized);
+
+    const globalCustomFilterFunctions = {
+        ...(options?.customFilterFunctions ?? {})
+    };
 
     return (action?, options?) => {
         if (isNil(action)) {
@@ -367,14 +386,26 @@ export function createWithServerSideProps<TSession extends any = any>(
 
         action = asAsync(action);
 
-        const checkPermission = toSessionPermissionCheckPredicateSafe(options?.checkPermission);
+        const customFilterFunctions: OverwritableFilterExpressionFunctions = {
+            ...globalCustomFilterFunctions,
+            ...(options?.customFilterFunctions ?? {})
+        };
+
+        const filters = createFilterExpressionFunctions({
+            "overwrites": customFilterFunctions
+        });
+
+        const checkPermission = toSessionPermissionCheckPredicateSafe({
+            "checker": options?.checkPermission,
+            "customFilterExpressionFunctions": customFilterFunctions
+        });
 
         return async (nextContext) => {
-            const request = nextContext.req;
-            const response = nextContext.res;
+            const { "req": request, "res": response } = nextContext;
 
             try {
                 const sessionCheckerContext: ISessionCheckerContext = {
+                    filters,
                     request,
                     response
                 };

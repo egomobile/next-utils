@@ -16,7 +16,8 @@
 import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
 import { IncomingMessage, ServerResponse } from "http";
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
-import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, RequestErrorHandler, RequestFailedHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import { createFilterExpressionFunctions } from "../utils";
 import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
 
@@ -28,6 +29,10 @@ export interface ICreateWithApiPropsOptions<TSession extends any = any> {
      * A custom function, which checks for a session.
      */
     checkSession?: Nilable<SessionChecker<TSession>>;
+    /**
+     * A list of global, custom filter functions, which should be added, removed or updated.
+     */
+    customFilterFunctions?: Nilable<OverwritableFilterExpressionFunctions>;
     /**
      * A custom function, which handles 400 Bad Request responses.
      */
@@ -137,6 +142,10 @@ export interface IWithApiPropsOptions<TSession extends any = any> {
      * A custom function, which checks for enough permission in a session.
      */
     checkPermission?: Nilable<SessionPermissionChecker<TSession>>;
+    /**
+     * A list of, custom filter functions, which should be added, removed or updated.
+     */
+    customFilterFunctions?: Nilable<OverwritableFilterExpressionFunctions>;
 }
 
 /**
@@ -227,15 +236,25 @@ export function apiResponse(
  * @returns {WithApiProps} The new middleware.
  */
 export function createWithApiProps<TSession extends any = any>(
-    options: ICreateWithApiPropsOptions<TSession> = {}
+    options?: ICreateWithApiPropsOptions<TSession>
 ): WithApiProps<TSession> {
-    const checkSession = toSessionCheckerSafe(options.checkSession);
-    const onBadRequest = toRequestFailedHandlerSafe(options.onBadRequest);
-    const onError = toRequestErrorHandlerSafe(options.onError);
-    const onForbidden = toRequestFailedHandlerSafe(options.onForbidden);
-    const onMethodNotAllowed = toRequestFailedHandlerSafe(options.onMethodNotAllowed);
-    const onNotFound = toRequestFailedHandlerSafe(options.onNotFound);
-    const onUnauthorized = toRequestFailedHandlerSafe(options.onUnauthorized);
+    if (!isNil(options?.customFilterFunctions)) {
+        if (typeof options?.customFilterFunctions !== "object") {
+            throw new TypeError("options.customFilterFunctions must be of type object");
+        }
+    }
+
+    const checkSession = toSessionCheckerSafe(options?.checkSession);
+    const onBadRequest = toRequestFailedHandlerSafe(options?.onBadRequest);
+    const onError = toRequestErrorHandlerSafe(options?.onError);
+    const onForbidden = toRequestFailedHandlerSafe(options?.onForbidden);
+    const onMethodNotAllowed = toRequestFailedHandlerSafe(options?.onMethodNotAllowed);
+    const onNotFound = toRequestFailedHandlerSafe(options?.onNotFound);
+    const onUnauthorized = toRequestFailedHandlerSafe(options?.onUnauthorized);
+
+    const globalCustomFilterFunctions = {
+        ...(options?.customFilterFunctions ?? {})
+    };
 
     return (actionOrActionOptions, options?) => {
         const action = toWithApiPropsAction({
@@ -245,11 +264,24 @@ export function createWithApiProps<TSession extends any = any>(
             onNotFound
         });
 
-        const checkPermission = toSessionPermissionCheckPredicateSafe(options?.checkPermission);
+        const customFilterFunctions: OverwritableFilterExpressionFunctions = {
+            ...globalCustomFilterFunctions,
+            ...(options?.customFilterFunctions ?? {})
+        };
+
+        const filters = createFilterExpressionFunctions({
+            "overwrites": customFilterFunctions
+        });
+
+        const checkPermission = toSessionPermissionCheckPredicateSafe({
+            "checker": options?.checkPermission,
+            "customFilterExpressionFunctions": customFilterFunctions
+        });
 
         return async (request, response) => {
             try {
                 const sessionCheckerContext: ISessionCheckerContext = {
+                    filters,
                     request,
                     response
                 };

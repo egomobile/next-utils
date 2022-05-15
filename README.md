@@ -210,6 +210,21 @@ const MyStaticSidePage: NextPage<IMyStaticSidePageProps> = ({ foo, bar }) => {
 export default MyStaticSidePage;
 ```
 
+## Credits
+
+- [Next.js](https://nextjs.org/)
+- [Filtrex](https://github.com/m93a/filtrex)
+- [joi](https://joi.dev/)
+- [sanitize-filename](https://github.com/parshap/node-sanitize-filename)
+
+## See also
+
+- [@egomobile/api-utils](https://github.com/egomobile/node-api-utils)
+- [@egomobile/http-server](https://github.com/egomobile/node-http-server)
+- [@egomobile/jobs](https://github.com/egomobile/node-jobs)
+- [@egomobile/nodelike-utils](https://github.com/egomobile/nodelike-utils) and [@egomobile/node-utils](https://github.com/egomobile/node-utils) utils
+- [@egomobile/types](https://github.com/egomobile/types)
+
 ## Documentation
 
 The API documentation can be found [here](https://egomobile.github.io/next-utils/).

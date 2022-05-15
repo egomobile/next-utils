@@ -13,8 +13,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { Nilable } from "@egomobile/types";
+import type { Nilable, Optional } from "@egomobile/types";
 import type { IncomingMessage, ServerResponse } from "http";
+
+/**
+ * A repository of filter expression functions.
+ */
+export type FilterExpressionFunctions = Record<string, (...args: any[]) => any>;
 
 /**
  * An execution context for a 'RequestErrorHandler' function.
@@ -59,6 +64,11 @@ export interface ISessionCheckerContext<
     TRequest extends IncomingMessage = IncomingMessage,
     TResponse extends ServerResponse = ServerResponse> {
     /**
+     * Repository of available filter functions, which are especially used in
+     * filter expressions.
+     */
+    filters: FilterExpressionFunctions;
+    /**
      * The underlying request context.
      */
     request: TRequest;
@@ -88,6 +98,11 @@ export interface ISessionPermissionCheckerPredicateContext<
      */
     session: TSession;
 }
+
+/**
+ * A repository of filter expression functions, which can be overwritten.
+ */
+export type OverwritableFilterExpressionFunctions = Record<string, Optional<(...args: any[]) => any>>;
 
 /**
  * Handles requests, which throw errors.
@@ -141,7 +156,7 @@ export type SessionCheckerResultValue<TSession extends any = any> =
  * A possible value for 'toUserPermissionCheckPredicateSafe' function.
  */
 export type SessionPermissionChecker<TSession extends any = any> =
-    SessionPermissionCheckerPredicate<TSession>;  // TODO: add string to use Filterex
+    SessionPermissionCheckerPredicate<TSession> | "string";
 
 /**
  * A function, which checks if a client has enough permission
