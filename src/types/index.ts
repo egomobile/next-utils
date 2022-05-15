@@ -15,11 +15,42 @@
 
 import type { Nilable, Optional } from "@egomobile/types";
 import type { IncomingMessage, ServerResponse } from "http";
+import type { ValidationError as JoiValidationError } from "joi";
+
+/**
+ * A body parser.
+ *
+ * @param {IBodyParserContext<TRequest, TResponse>} context The context.
+ *
+ * @returns {any} The value, which should be used in 'body' prop of request context.
+ */
+export type BodyParser<TRequest extends IncomingMessage = IncomingMessage, TResponse extends ServerResponse = ServerResponse>
+    = (context: IBodyParserContext<TRequest, TResponse>) => any;
 
 /**
  * A repository of filter expression functions.
  */
 export type FilterExpressionFunctions = Record<string, (...args: any[]) => any>;
+
+/**
+ * Context for a 'BodyParser' function.
+ */
+export interface IBodyParserContext<
+    TRequest extends IncomingMessage = IncomingMessage,
+    TResponse extends ServerResponse = ServerResponse> {
+    /**
+     * The loaded body data.
+     */
+    body: Buffer;
+    /**
+     * The request context.
+     */
+    request: TRequest;
+    /**
+     * The request context.
+     */
+    response: TResponse;
+}
 
 /**
  * An execution context for a 'RequestErrorHandler' function.
@@ -55,6 +86,18 @@ export interface IRequestFailedHandlerContext<
      * The proposed HTTP status text.
      */
     statusText: string;
+}
+
+/**
+ * An execution context for a 'RequestValidationErrorHandler' function.
+ */
+export interface IRequestValidationErrorHandlerContext<
+    TRequest extends IncomingMessage = IncomingMessage,
+    TResponse extends ServerResponse = ServerResponse> extends IRequestFailedHandlerContext<TRequest, TResponse> {
+    /**
+     * The thrown error.
+     */
+    error: JoiValidationError;
 }
 
 /**
@@ -123,6 +166,16 @@ export type RequestFailedHandler<
     TRequest extends IncomingMessage = IncomingMessage,
     TResponse extends ServerResponse = ServerResponse> =
     (context: IRequestFailedHandlerContext<TRequest, TResponse>) => any;
+
+/**
+ * Handles requests, where the validation of the input data failed.
+ *
+ * @param {IRequestErrorHandlerContext<TRequest, TResponse>} context The underlying execution context.
+ */
+export type RequestValidationErrorHandler<
+    TRequest extends IncomingMessage = IncomingMessage,
+    TResponse extends ServerResponse = ServerResponse> =
+    (context: IRequestValidationErrorHandlerContext<TRequest, TResponse>) => any;
 
 /**
  * A possible value for a 'revalidate' prop.

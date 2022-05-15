@@ -13,12 +13,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { readStream } from "@egomobile/node-utils";
 import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
 import type { Nilable, Optional } from "@egomobile/types";
+import { AnySchema, isSchema } from "joi";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult, GetStaticProps, GetStaticPropsContext, GetStaticPropsResult, Redirect } from "next";
-import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RevalidateProp, SessionChecker, SessionPermissionChecker } from "../types";
+import type { BodyParser, ISessionPermissionCheckerPredicateContext, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, RevalidateProp, SessionChecker, SessionPermissionChecker } from "../types";
 import { createFilterExpressionFunctions } from "../utils";
-import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
+import { toBodyParserSafe, toRequestValidationErrorHandlerSafe, toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 
 /**
  * The default value for a prop of a 'getStaticProps' result
@@ -37,6 +39,10 @@ export type DefaultStaticResultValue<T> = T | DefaultStaticResultValueGetter<T>;
  * Options for 'createWithServerSideProps()' function.
  */
 export interface ICreateWithServerSidePropsOptions<TSession extends any = any> {
+    /**
+     * A custom function to parse the body.
+     */
+    bodyParser?: Nilable<BodyParser>;
     /**
      * A custom function, which checks for a session.
      */
@@ -57,6 +63,10 @@ export interface ICreateWithServerSidePropsOptions<TSession extends any = any> {
      * A custom function, which handles 401 Unauthorized responses.
      */
     onUnauthorized?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles failed validation of input data.
+     */
+    onValidationFailed?: Nilable<RequestValidationErrorHandler>;
 }
 
 /**
@@ -94,6 +104,10 @@ export interface IWithServerSidePropsActionContext<TSession extends any = any> {
  */
 export interface IWithServerSidePropsOptions<TSession extends any = any> {
     /**
+     * A custom function to parse the body.
+     */
+    bodyParser?: Nilable<BodyParser>;
+    /**
      * A custom function, which checks for enough permission in a session.
      */
     checkPermission?: Nilable<SessionPermissionChecker<TSession>>;
@@ -101,6 +115,10 @@ export interface IWithServerSidePropsOptions<TSession extends any = any> {
      * A list of global, custom filter functions, which should be added, removed or updated.
      */
     customFilterFunctions?: Nilable<OverwritableFilterExpressionFunctions>;
+    /**
+     * A custom schema to use, which validates the input.
+     */
+    schema?: Nilable<AnySchema>;
 }
 
 /**
@@ -354,6 +372,8 @@ export function createWithStaticProps(options?: Nilable<ICreateWithStaticPropsOp
 export function createWithServerSideProps<TSession extends any = any>(
     options?: Nilable<ICreateWithServerSidePropsOptions<TSession>>
 ): WithServerSideProps<TSession> {
+    const defaultBodyParser = toBodyParserSafe(options?.bodyParser);
+
     if (!isNil(options?.customFilterFunctions)) {
         if (typeof options?.customFilterFunctions !== "object") {
             throw new TypeError("options.customFilterFunctions must be of type object");
@@ -365,12 +385,23 @@ export function createWithServerSideProps<TSession extends any = any>(
     const onError = toRequestErrorHandlerSafe(options?.onError);
     const onForbidden = toRequestFailedHandlerSafe(options?.onForbidden);
     const onUnauthorized = toRequestFailedHandlerSafe(options?.onUnauthorized);
+    const onValidationFailed = toRequestValidationErrorHandlerSafe(options?.onValidationFailed);
 
     const globalCustomFilterFunctions = {
         ...(options?.customFilterFunctions ?? {})
     };
 
     return (action?, options?) => {
+        const bodyParser = toBodyParserSafe(options?.bodyParser)
+            ?? defaultBodyParser;
+
+        const schema = options?.schema;
+        if (!isNil(schema)) {
+            if (!isSchema(schema)) {
+                throw new TypeError("options.schema must be a valid Joi schema");
+            }
+        }
+
         if (isNil(action)) {
             action = async () => {
                 return {
@@ -403,14 +434,24 @@ export function createWithServerSideProps<TSession extends any = any>(
         return async (nextContext) => {
             const { "req": request, "res": response } = nextContext;
 
+            if (bodyParser) {
+                const body = await readStream(request);
+
+                request.body = await bodyParser({
+                    body,
+                    request,
+                    response
+                });
+            }
+
+            const { body } = request;
+
             try {
-                const sessionCheckerContext: ISessionCheckerContext = {
+                const session = await checkSession!({
                     filters,
                     request,
                     response
-                };
-
-                const session = await checkSession!(sessionCheckerContext);
+                });
                 if (session !== false) {
                     const permissionCheckerContext: ISessionPermissionCheckerPredicateContext<TSession> = {
                         request,
@@ -420,6 +461,23 @@ export function createWithServerSideProps<TSession extends any = any>(
 
                     const isPermissionGranted = await checkPermission(permissionCheckerContext);
                     if (isPermissionGranted) {
+                        if (schema) {
+                            const validationResult = schema.validate(body);
+                            if (validationResult.error) {
+                                await onValidationFailed({
+                                    "error": validationResult.error,
+                                    request,
+                                    response,
+                                    "statusCode": 400,
+                                    "statusText": "Bad Request"
+                                });
+
+                                return {
+                                    "props": {}
+                                };
+                            }
+                        }
+
                         return action!({
                             nextContext,
                             session

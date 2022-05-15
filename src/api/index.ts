@@ -14,12 +14,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
-import { IncomingMessage, ServerResponse } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
-import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, SessionChecker, SessionPermissionChecker } from "../types";
-import { createFilterExpressionFunctions } from "../utils";
-import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import type { createFilterExpressionFunctions } from "../utils";
+import { toRequestValidationErrorHandlerSafe, toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
+import type { AnySchema } from "joi";
 
 /**
  * Options for 'createWithApiProps()' function.
@@ -57,6 +58,10 @@ export interface ICreateWithApiPropsOptions<TSession extends any = any> {
      * A custom function, which handles 401 Unauthorized responses.
      */
     onUnauthorized?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles failed validation of input data.
+     */
+    onValidationFailed?: Nilable<RequestValidationErrorHandler>;
 }
 
 interface IToWithApiPropsActionOptions {
@@ -64,6 +69,7 @@ interface IToWithApiPropsActionOptions {
     onBadRequest: RequestFailedHandler;
     onMethodNotAllowed: RequestFailedHandler;
     onNotFound: RequestFailedHandler;
+    onValidationFailed: RequestValidationErrorHandler;
 }
 
 /**
@@ -95,15 +101,15 @@ export interface IWithApiPropsActionOptions<TResponse extends any = any> {
     /**
      * The action for a CONNECT request.
      */
-    CONNECT?: Nilable<WithApiPropsAction<TResponse>>;
+    CONNECT?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
     /**
      * The action for a DELETE request.
      */
-    DELETE?: Nilable<WithApiPropsAction<TResponse>>;
+    DELETE?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
     /**
      * The action for a GET request.
      */
-    GET?: Nilable<WithApiPropsAction<TResponse>>;
+    GET?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
     /**
      * A function, which returns
      */
@@ -111,27 +117,27 @@ export interface IWithApiPropsActionOptions<TResponse extends any = any> {
     /**
      * The action for a v request.
      */
-    HEAD?: Nilable<WithApiPropsAction<TResponse>>;
+    HEAD?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
     /**
      * The action for a OPTIONS request.
      */
-    OPTIONS?: Nilable<WithApiPropsAction<TResponse>>;
+    OPTIONS?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
     /**
      * The action for a PATCH request.
      */
-    PATCH?: Nilable<WithApiPropsAction<TResponse>>;
+    PATCH?: Nilable<WithApiPropsActionOrOptionsWithBody<TResponse>>;
     /**
      * The action for a POST request.
      */
-    POST?: Nilable<WithApiPropsAction<TResponse>>;
+    POST?: Nilable<WithApiPropsActionOrOptionsWithBody<TResponse>>;
     /**
      * The action for a PUT request.
      */
-    PUT?: Nilable<WithApiPropsAction<TResponse>>;
+    PUT?: Nilable<WithApiPropsActionOrOptionsWithBody<TResponse>>;
     /**
      * The action for a TRACE request.
      */
-    TRACE?: Nilable<WithApiPropsAction<TResponse>>;
+    TRACE?: Nilable<WithApiPropsActionOrOptions<TResponse>>;
 }
 
 /**
@@ -169,6 +175,16 @@ export type WithApiProps<TSession extends any = any, TResponse extends any = any
 export type WithApiPropsAction<TResponse extends any = any> = (
     context: IWithApiPropsActionContext<TResponse>,
 ) => Promise<any>;
+
+export type WithApiPropsActionOrOptions<TResponse extends any = any> = WithApiPropsAction<TResponse> | {
+    action: WithApiPropsAction<TResponse>;
+};
+
+export type WithApiPropsActionOrOptionsWithBody<TResponse extends any = any> =
+    WithApiPropsAction<TResponse> | {
+        action: WithApiPropsAction<TResponse>;
+        schema?: Nilable<AnySchema>;
+    };
 
 /**
  * Action for an 'IWithApiPropsActionOptions' instance.
@@ -251,6 +267,7 @@ export function createWithApiProps<TSession extends any = any>(
     const onMethodNotAllowed = toRequestFailedHandlerSafe(options?.onMethodNotAllowed);
     const onNotFound = toRequestFailedHandlerSafe(options?.onNotFound);
     const onUnauthorized = toRequestFailedHandlerSafe(options?.onUnauthorized);
+    const onValidationFailed = toRequestValidationErrorHandlerSafe(options?.onValidationFailed);
 
     const globalCustomFilterFunctions = {
         ...(options?.customFilterFunctions ?? {})
@@ -261,7 +278,8 @@ export function createWithApiProps<TSession extends any = any>(
             actionOrActionOptions,
             onBadRequest,
             onMethodNotAllowed,
-            onNotFound
+            onNotFound,
+            onValidationFailed
         });
 
         const customFilterFunctions: OverwritableFilterExpressionFunctions = {
@@ -338,7 +356,7 @@ export function createWithApiProps<TSession extends any = any>(
     };
 }
 
-function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNotAllowed, onNotFound }: IToWithApiPropsActionOptions): WithApiPropsAction<any> {
+function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNotAllowed, onNotFound, onValidationFailed }: IToWithApiPropsActionOptions): WithApiPropsAction<any> {
     if (typeof actionOrActionOptions === "function") {
         return actionOrActionOptions;
     }
@@ -351,14 +369,45 @@ function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNot
 
     // eslint-disable-next-line consistent-return
     return async (context) => {
+        const { request, response } = context;
+        const { body } = request;
+
         const method =
             (context.request.method ?? "").toUpperCase().trim() || "GET";
 
-        const action: Nilable<WithApiPropsAction<any>> = (
+        const actionOrOptions: Nilable<WithApiPropsActionOrOptionsWithBody<any>> = (
             actionOrActionOptions as any
         )[method];
 
+        let action: Nilable<WithApiPropsAction>;
+        let schema: Nilable<AnySchema>;
+
+        if (!isNil(actionOrOptions)) {
+            if (typeof actionOrOptions === "function") {
+                action = actionOrActionOptions as Nilable<WithApiPropsAction>;
+            }
+            else if (typeof actionOrOptions === "object") {
+                action = actionOrOptions.action;
+                schema = actionOrOptions.schema;
+            }
+        }
+
         if (typeof action === "function") {
+            if (schema) {
+                const validationResult = schema.validate(body);
+                if (validationResult.error) {
+                    await onValidationFailed({
+                        "error": validationResult.error,
+                        request,
+                        response,
+                        "statusCode": 400,
+                        "statusText": "Bad Request"
+                    });
+
+                    return;
+                }
+            }
+
             const propsResult = await Promise.resolve(getProps(context));
 
             const badRequest: Optional<string | true> = (propsResult as any).badRequest;
@@ -366,16 +415,16 @@ function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNot
 
             if (notFound) {
                 await onNotFound({
-                    "request": context.request,
-                    "response": context.response,
+                    request,
+                    response,
                     "statusCode": 404,
                     "statusText": "Not Found"
                 });
             }
             else if (badRequest) {
                 await onBadRequest({
-                    "request": context.request,
-                    "response": context.response,
+                    request,
+                    response,
                     "statusCode": 400,
                     "statusText": "Bad Request"
                 });
@@ -393,8 +442,8 @@ function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNot
             // for current HTTP method
 
             await onMethodNotAllowed({
-                "request": context.request,
-                "response": context.response,
+                request,
+                response,
                 "statusCode": 405,
                 "statusText": "Method Not Allowed"
             });
@@ -402,7 +451,7 @@ function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNot
     };
 }
 
-export function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): RequestErrorHandler {
+function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): RequestErrorHandler {
     if (isNil(handler)) {
         handler = async ({ error, request, response, statusCode, statusText }) => {
             apiResponse(request, response)
@@ -426,7 +475,7 @@ export function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>)
     return asAsync(handler);
 }
 
-export function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): RequestFailedHandler {
+function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): RequestFailedHandler {
     if (isNil(handler)) {
         handler = async ({ request, response, statusCode, statusText }) => {
             apiResponse(request, response)

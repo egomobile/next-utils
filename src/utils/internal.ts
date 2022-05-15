@@ -16,12 +16,49 @@
 import { compileExpression } from "filtrex";
 import { asAsync, isNil } from "@egomobile/nodelike-utils";
 import type { Nilable } from "@egomobile/types";
-import type { OverwritableFilterExpressionFunctions, SessionChecker, SessionPermissionChecker, SessionPermissionCheckerPredicate } from "../types";
+import type { BodyParser, OverwritableFilterExpressionFunctions, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker, SessionPermissionCheckerPredicate } from "../types";
 import { createFilterExpressionFunctions } from ".";
+import { apiResponse } from "../api";
 
 export interface IToSessionPermissionCheckPredicateSafeOptions {
     checker: Nilable<SessionPermissionChecker>;
     customFilterExpressionFunctions: Nilable<OverwritableFilterExpressionFunctions>;
+}
+
+export function toBodyParserSafe(parser: Nilable<BodyParser>): Nilable<BodyParser> {
+    if (!isNil(parser)) {
+        if (typeof parser !== "function") {
+            throw new TypeError("parser must be of type function");
+        }
+
+        return asAsync(parser);
+    }
+
+    return parser;
+}
+
+export function toRequestValidationErrorHandlerSafe(handler: Nilable<RequestValidationErrorHandler>): RequestValidationErrorHandler {
+    if (isNil(handler)) {
+        handler = async ({ error, request, response, statusCode, statusText }) => {
+            apiResponse(request, response)
+                .noSuccess()
+                .addMessage({
+                    "code": statusCode * 100,
+                    "type": "error",
+                    "internal": true,
+                    "message": `[${statusText}] ${error.message}`
+                })
+                .withStatus(statusCode)
+                .send();
+        };
+    }
+    else {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
+        }
+    }
+
+    return asAsync(handler);
 }
 
 export function toSessionPermissionCheckPredicateSafe({
