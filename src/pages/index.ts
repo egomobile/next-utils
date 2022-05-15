@@ -13,36 +13,63 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
+import type { Nilable } from "@egomobile/types";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import type { Nilable } from "../types";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, RequestErrorHandler, RequestFailedHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 
 /**
  * Options for 'createWithServerSideProps()' function.
  */
-export interface ICreateWithServerSidePropsOptions {
+export interface ICreateWithServerSidePropsOptions<TSession extends any = any> {
+    /**
+     * A custom function, which checks for a session.
+     */
+    checkSession?: Nilable<SessionChecker<TSession>>;
+    /**
+     * A custom function, which handles 500 Internal Server Error responses.
+     */
+    onError?: Nilable<RequestErrorHandler>;
+    /**
+     * A custom function, which handles 403 Forbidden responses.
+     */
+    onForbidden?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles 401 Unauthorized responses.
+     */
+    onUnauthorized?: Nilable<RequestFailedHandler>;
 }
 
 /**
  * A context for a 'WithServerSidePropsAction' function.
  */
-export interface IWithServerSidePropsActionContext {
+export interface IWithServerSidePropsActionContext<TSession extends any = any> {
     /**
      * The Next.js context.
      */
     nextContext: GetServerSidePropsContext;
+    /**
+     * The underlying session.
+     */
+    session: TSession;
 }
 
 /**
  * Custom and optional options for a 'WithServerSideProps' function.
  */
-export interface IWithServerSidePropsOptions {
+export interface IWithServerSidePropsOptions<TSession extends any = any> {
+    /**
+     * A custom function, which checks for enough permission in a session.
+     */
+    checkPermission?: Nilable<SessionPermissionChecker<TSession>>;
 }
 
 /**
  * Action for a 'WithServerSideProps' function.
  */
-export type WithServerSidePropsAction = (
-    context: IWithServerSidePropsActionContext,
+export type WithServerSidePropsAction<TSession extends any = any> = (
+    context: IWithServerSidePropsActionContext<TSession>,
 ) => Promise<GetServerSidePropsResult<any>>;
 
 /**
@@ -54,8 +81,8 @@ export type WithServerSidePropsAction = (
  *
  * @returns {GetServerSideProps} The new function.
  */
-export type WithServerSideProps = (
-    action?: Nilable<WithServerSidePropsAction>,
+export type WithServerSideProps<TSession extends any = any> = (
+    action?: Nilable<WithServerSidePropsAction<TSession>>,
     options?: Nilable<IWithServerSidePropsOptions>,
 ) => GetServerSideProps<any>;
 
@@ -66,23 +93,83 @@ export type WithServerSideProps = (
  *
  * @returns {WithServerSideProps} The new middleware.
  */
-export function createWithServerSideProps(options: ICreateWithServerSidePropsOptions = {}): WithServerSideProps {
-    return (action?, options?) => {
-        return async (nextContext) => {
-            try {
-                if (action) {
-                    return action({
-                        nextContext
-                    });
-                }
+export function createWithServerSideProps<TSession extends any = any>(
+    options: ICreateWithServerSidePropsOptions<TSession> = {}
+): WithServerSideProps<TSession> {
+    const checkSession = toSessionCheckerSafe(options.checkSession);
 
-                return {
-                    "props": {}
+    const onError = toRequestErrorHandlerSafe(options.onError);
+    const onForbidden = toRequestFailedHandlerSafe(options.onForbidden);
+    const onUnauthorized = toRequestFailedHandlerSafe(options.onUnauthorized);
+
+    return (action?, options?) => {
+        const checkPermission = toSessionPermissionCheckPredicateSafe(options?.checkPermission);
+
+        return async (nextContext) => {
+            const request = nextContext.req;
+            const response = nextContext.res;
+
+            try {
+                const sessionCheckerContext: ISessionCheckerContext = {
+                    request,
+                    response
                 };
+
+                const session = await checkSession!(sessionCheckerContext);
+                if (session !== false) {
+                    const permissionCheckerContext: ISessionPermissionCheckerPredicateContext<TSession> = {
+                        request,
+                        response,
+                        session
+                    };
+
+                    const isPermissionGranted = await checkPermission(permissionCheckerContext);
+                    if (isPermissionGranted) {
+                        if (action) {
+                            return action({
+                                nextContext,
+                                session
+                            });
+                        }
+
+                        return {
+                            "props": {}
+                        };
+                    }
+                    else {
+                        await onForbidden({
+                            request,
+                            response,
+                            "statusCode": 403,
+                            "statusText": "Forbidden"
+                        });
+
+                        return {
+                            "props": {}
+                        };
+                    }
+                }
+                else {
+                    await onUnauthorized({
+                        request,
+                        response,
+                        "statusCode": 401,
+                        "statusText": "Unauthorized"
+                    });
+
+                    return {
+                        "props": {}
+                    };
+                }
             }
             catch (ex: any) {
-                nextContext.res.statusCode = 500;
-                nextContext.res.end(`${ex?.stack}`);
+                await onError!({
+                    "error": ex,
+                    request,
+                    response,
+                    "statusCode": 500,
+                    "statusText": "Internal Server Error"
+                });
 
                 return {
                     "props": {}
@@ -90,4 +177,42 @@ export function createWithServerSideProps(options: ICreateWithServerSidePropsOpt
             }
         };
     };
+}
+
+function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): RequestErrorHandler {
+    if (isNil(handler)) {
+        handler = async ({ error, response, statusCode, statusText }) => {
+            response.statusCode = statusCode;
+            response.statusMessage = statusText;
+
+            response.end(Buffer.from(
+                toStringSafe(error), "utf8"
+            ));
+        };
+    }
+    else {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
+        }
+    }
+
+    return asAsync(handler);
+}
+
+function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): RequestFailedHandler {
+    if (isNil(handler)) {
+        handler = async ({ response, statusCode, statusText }) => {
+            response.statusCode = statusCode;
+            response.statusMessage = statusText;
+
+            response.end();
+        };
+    }
+    else {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
+        }
+    }
+
+    return asAsync(handler);
 }

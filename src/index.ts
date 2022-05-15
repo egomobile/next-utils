@@ -16,9 +16,10 @@
 import next from "next";
 import url from "url";
 import { createServer, IHttpServer } from "@egomobile/http-server";
+import { isNil } from "@egomobile/nodelike-utils";
+import type { Nilable } from "@egomobile/types";
 import type { NextServer } from "next/dist/server/next";
-import type { NextRequestHandler, Nilable } from "./types";
-import { isNil } from "./utils/internal";
+import type { NextRequestHandler } from "./types/internal";
 
 /**
  * Options for 'setupHTTPServer()' function.

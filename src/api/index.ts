@@ -13,20 +13,58 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
+import { IncomingMessage, ServerResponse } from "http";
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
-import type { Nilable, Optional } from "../types";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, RequestErrorHandler, RequestFailedHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import { toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
 
 /**
  * Options for 'createWithApiProps()' function.
  */
-export interface ICreateWithApiPropsOptions {
+export interface ICreateWithApiPropsOptions<TSession extends any = any> {
+    /**
+     * A custom function, which checks for a session.
+     */
+    checkSession?: Nilable<SessionChecker<TSession>>;
+    /**
+     * A custom function, which handles 400 Bad Request responses.
+     */
+    onBadRequest?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles 500 Internal Server Error responses.
+     */
+    onError?: Nilable<RequestErrorHandler>;
+    /**
+     * A custom function, which handles 403 Forbidden responses.
+     */
+    onForbidden?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles 405 Method Not Allowed responses.
+     */
+    onMethodNotAllowed?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles 404 Not Found responses.
+     */
+    onNotFound?: Nilable<RequestFailedHandler>;
+    /**
+     * A custom function, which handles 401 Unauthorized responses.
+     */
+    onUnauthorized?: Nilable<RequestFailedHandler>;
+}
+
+interface IToWithApiPropsActionOptions {
+    actionOrActionOptions: WithApiPropsActionValue<any>;
+    onBadRequest: RequestFailedHandler;
+    onMethodNotAllowed: RequestFailedHandler;
+    onNotFound: RequestFailedHandler;
 }
 
 /**
  * Context for a 'WithApiPropsAction' function.
  */
-export interface IWithApiPropsActionContext<TResponse extends any = any> {
+export interface IWithApiPropsActionContext<TSession extends any = any, TResponse extends any = any> {
     /**
      * Props for the PI action.
      */
@@ -39,6 +77,10 @@ export interface IWithApiPropsActionContext<TResponse extends any = any> {
      * The response context.
      */
     response: NextApiResponse<TResponse>;
+    /**
+     * The underlying session, if available.
+     */
+    session: Nilable<TSession>;
 }
 
 /**
@@ -90,7 +132,11 @@ export interface IWithApiPropsActionOptions<TResponse extends any = any> {
 /**
  * Custom and optional options for a 'WithApiProps' function.
  */
-export interface IWithApiPropsOptions {
+export interface IWithApiPropsOptions<TSession extends any = any> {
+    /**
+     * A custom function, which checks for enough permission in a session.
+     */
+    checkPermission?: Nilable<SessionPermissionChecker<TSession>>;
 }
 
 /**
@@ -101,7 +147,7 @@ export interface IWithApiPropsOptions {
  *
  * @returns {NextApiHandler<TResponse>} The handler to use.
  */
-export type WithApiProps<TResponse extends any = any> = (
+export type WithApiProps<TSession extends any = any, TResponse extends any = any> = (
     actionOrActionOptions: WithApiPropsActionValue<TResponse>,
     options?: Nilable<IWithApiPropsOptions>,
 ) => NextApiHandler<TResponse>;
@@ -161,56 +207,106 @@ export type WithApiPropsActionValue<TResponse extends any = any> =
 /**
  * Creates a new builder for an API response.
  *
- * @param {NextApiRequest} request The request context.
- * @param {NextApiResponse<any>} response The response context.
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
  *
  * @returns {NextApiResponseBuilder} The new instance.
  */
 export function apiResponse(
-    request: NextApiRequest,
-    response: NextApiResponse<any>,
+    request: IncomingMessage,
+    response: ServerResponse,
 ): NextApiResponseBuilder {
-    return new NextApiResponseBuilder(request, response as any);
+    return new NextApiResponseBuilder(request, response);
 }
 
 /**
  * Creates a new 'WithApiProps' middleware.
  *
- * @param {ICreateWithApiPropsOptions} [options] Custom options.
+ * @param {ICreateWithApiPropsOptions<TSession>} [options] Custom options.
  *
  * @returns {WithApiProps} The new middleware.
  */
-export function createWithApiProps(options: ICreateWithApiPropsOptions = {}): WithApiProps {
+export function createWithApiProps<TSession extends any = any>(
+    options: ICreateWithApiPropsOptions<TSession> = {}
+): WithApiProps<TSession> {
+    const checkSession = toSessionCheckerSafe(options.checkSession);
+    const onBadRequest = toRequestFailedHandlerSafe(options.onBadRequest);
+    const onError = toRequestErrorHandlerSafe(options.onError);
+    const onForbidden = toRequestFailedHandlerSafe(options.onForbidden);
+    const onMethodNotAllowed = toRequestFailedHandlerSafe(options.onMethodNotAllowed);
+    const onNotFound = toRequestFailedHandlerSafe(options.onNotFound);
+    const onUnauthorized = toRequestFailedHandlerSafe(options.onUnauthorized);
+
     return (actionOrActionOptions, options?) => {
-        const action = toWithApiPropsAction(actionOrActionOptions);
+        const action = toWithApiPropsAction({
+            actionOrActionOptions,
+            onBadRequest,
+            onMethodNotAllowed,
+            onNotFound
+        });
+
+        const checkPermission = toSessionPermissionCheckPredicateSafe(options?.checkPermission);
 
         return async (request, response) => {
             try {
-                await action({
-                    "props": {},
+                const sessionCheckerContext: ISessionCheckerContext = {
                     request,
                     response
-                });
+                };
+
+                const session = await checkSession(sessionCheckerContext);
+                if (session !== false) {
+                    const permissionCheckerContext: ISessionPermissionCheckerPredicateContext<TSession> = {
+                        request,
+                        response,
+                        session
+                    };
+
+                    const isPermissionGranted = await checkPermission(permissionCheckerContext);
+                    if (isPermissionGranted) {
+                        await action({
+                            "props": {},
+                            request,
+                            response,
+                            session
+                        });
+                    }
+                    else {
+                        // not enough permission
+
+                        await onForbidden({
+                            request,
+                            response,
+                            "statusCode": 403,
+                            "statusText": "Forbidden"
+                        });
+                    }
+                }
+                else {
+                    // invalid session
+
+                    await onUnauthorized({
+                        request,
+                        response,
+                        "statusCode": 401,
+                        "statusText": "Unauthorized"
+                    });
+                }
             }
             catch (ex: any) {
-                apiResponse(request, response)
-                    .noSuccess()
-                    .withStatus(500)
-                    .addMessage({
-                        "code": 500,
-                        "type": "error",
-                        "message": `${ex}\n\n${ex?.stack}`,
-                        "internal": true
-                    })
-                    .send();
+                await onError({
+                    "error": ex,
+                    request,
+                    response,
+                    "statusCode": 500,
+                    "statusText": "Internal Server Error"
+                });
             }
         };
     };
 }
 
-function toWithApiPropsAction(
-    actionOrActionOptions: WithApiPropsActionValue<any>,
-): WithApiPropsAction<any> {
+function toWithApiPropsAction({ actionOrActionOptions, onBadRequest, onMethodNotAllowed, onNotFound }: IToWithApiPropsActionOptions): WithApiPropsAction<any> {
     if (typeof actionOrActionOptions === "function") {
         return actionOrActionOptions;
     }
@@ -237,38 +333,20 @@ function toWithApiPropsAction(
             const notFound: Optional<string | true> = (propsResult as any).notFound;
 
             if (notFound) {
-                // 404 - Not Found
-
-                apiResponse(context.request, context.response)
-                    .noSuccess()
-                    .withStatus(404)
-                    .addMessage({
-                        "code": 40400,
-                        "type": "error",
-                        "message":
-                            typeof notFound === "string"
-                                ? notFound
-                                : "Not Found",
-                        "internal": true
-                    })
-                    .send();
+                await onNotFound({
+                    "request": context.request,
+                    "response": context.response,
+                    "statusCode": 404,
+                    "statusText": "Not Found"
+                });
             }
             else if (badRequest) {
-                // 400 - Bad Request
-
-                apiResponse(context.request, context.response)
-                    .noSuccess()
-                    .withStatus(400)
-                    .addMessage({
-                        "code": 40000,
-                        "type": "error",
-                        "message":
-                            typeof badRequest === "string"
-                                ? badRequest
-                                : "Bad Request",
-                        "internal": true
-                    })
-                    .send();
+                await onBadRequest({
+                    "request": context.request,
+                    "response": context.response,
+                    "statusCode": 400,
+                    "statusText": "Bad Request"
+                });
             }
             else {
                 // write props to context ...
@@ -282,18 +360,62 @@ function toWithApiPropsAction(
             // no matching action found
             // for current HTTP method
 
-            apiResponse(context.request, context.response)
+            await onMethodNotAllowed({
+                "request": context.request,
+                "response": context.response,
+                "statusCode": 405,
+                "statusText": "Method Not Allowed"
+            });
+        }
+    };
+}
+
+export function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): RequestErrorHandler {
+    if (isNil(handler)) {
+        handler = async ({ error, request, response, statusCode, statusText }) => {
+            apiResponse(request, response)
                 .noSuccess()
-                .withStatus(405)
+                .withStatus(statusCode)
                 .addMessage({
-                    "code": 40500,
+                    "code": statusCode * 100,  // 500 => 50000
                     "type": "error",
-                    "message": "Method Not Allowed",
+                    "message": `[${statusText}] ${toStringSafe(error)}`,
                     "internal": true
                 })
                 .send();
+        };
+    }
+    else {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
         }
-    };
+    }
+
+    return asAsync(handler);
+}
+
+export function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): RequestFailedHandler {
+    if (isNil(handler)) {
+        handler = async ({ request, response, statusCode, statusText }) => {
+            apiResponse(request, response)
+                .noSuccess()
+                .withStatus(statusCode)
+                .addMessage({
+                    "code": statusCode * 100,  // 403 => 40300
+                    "type": "error",
+                    "message": statusText,
+                    "internal": true
+                })
+                .send();
+        };
+    }
+    else {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
+        }
+    }
+
+    return asAsync(handler);
 }
 
 export * from "./NextApiResponseBuilder";

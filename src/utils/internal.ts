@@ -13,6 +13,36 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-export function isNil(val: any): val is null | typeof undefined {
-    return typeof val === "undefined" || val === null;
+import { asAsync, isNil } from "@egomobile/nodelike-utils";
+import type { Nilable } from "@egomobile/types";
+import type { SessionChecker, SessionPermissionChecker, SessionPermissionCheckerPredicate } from "../types";
+
+export function toSessionPermissionCheckPredicateSafe(
+    checker: Nilable<SessionPermissionChecker>,
+): SessionPermissionCheckerPredicate {
+    if (isNil(checker)) {
+        checker = async () => {
+            return true;
+        };
+    };
+
+    return checker;
+}
+
+
+export function toSessionCheckerSafe<TSession extends any = any>(
+    checker: Nilable<SessionChecker<TSession>>
+): SessionChecker<TSession> {
+    if (isNil(checker)) {
+        checker = async () => {
+            return undefined;  // we do not work with sessions here
+        };
+    }
+    else {
+        if (typeof checker !== "function") {
+            throw new TypeError("options.checkSession must be of type function");
+        }
+    }
+
+    return asAsync(checker);
 }

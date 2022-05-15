@@ -16,8 +16,8 @@
 import path from "path";
 import sanitizeFilename from "sanitize-filename";
 import { IJob, ILoadAndStartJobsOptions, IWithWorkerOptions, JobAction, loadAndStartJobs, loadAndStartJobsSync, withWorker as _withWorker } from "@egomobile/jobs";
-import { isNil } from "../utils/internal";
-import { Nilable } from "../types";
+import { isNil } from "@egomobile/nodelike-utils";
+import type { Nilable } from "@egomobile/types";
 
 /**
  * Options for 'loadJobs()' and 'loadJobsSync()' functions.
