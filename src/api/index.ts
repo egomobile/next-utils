@@ -17,7 +17,7 @@ import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
 import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker } from "../types";
-import type { createFilterExpressionFunctions } from "../utils";
+import { createFilterExpressionFunctions } from "../utils";
 import { toRequestValidationErrorHandlerSafe, toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
 import type { AnySchema } from "joi";
