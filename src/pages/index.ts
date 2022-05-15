@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import type { Nilable } from "../types/internal";
+import type { Nilable } from "../types";
 
 /**
  * Options for 'createWithServerSideProps()' function.

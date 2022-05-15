@@ -50,7 +50,11 @@
     "dependencies": {
         "@egomobile/api-utils": "^0.6.1",
         "@egomobile/jobs": "^0.8.0",
-        "@types/node": "14.18.18"
+        "@egomobile/node-utils": "^0.3.0",
+        "@egomobile/nodelike-utils": "^0.2.2",
+        "@egomobile/types": "^2.0.0",
+        "@types/node": "14.18.18",
+        "sanitize-filename": "1.6.3"
     },
     "devDependencies": {
         "@egomobile/http-server": "^0.34.0",

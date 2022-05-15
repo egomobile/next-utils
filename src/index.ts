@@ -17,7 +17,7 @@ import next from "next";
 import url from "url";
 import { createServer, IHttpServer } from "@egomobile/http-server";
 import type { NextServer } from "next/dist/server/next";
-import type { NextRequestHandler, Nilable } from "./types/internal";
+import type { NextRequestHandler, Nilable } from "./types";
 import { isNil } from "./utils/internal";
 
 /**
@@ -58,16 +58,27 @@ export interface ISetupHTTPServerResult {
  *
  * @example
  * ```
+ * // npm i cors && npm i -D @types/cors
+ * import cors from "cors"
+ * // npm i cookie-parser && npm i -D @types/cookie-parser
+ * import cookieParser from "cookie-parser"
  * import { createServer } from "@egomobile/http-server"
  * import { setupHTTPServer } from "@egomobile/next-utils"
  *
+ * // underlying HTTP server
+ * // with handle the requests
  * const server = createServer()
+ *
+ * // add global middlewares
+ * server.use(cors())
+ * server.use(cookieParser())
  *
  * await setupHTTPServer({
  *   server
- * });
+ * })
  *
- * await server.listen()
+ * // 'app' is the Next.js app instance
+ * const { app } = await server.listen()
  * ```
  *
  * @param {ISetupHTTPServerOptions} [options] Custom options.
@@ -82,7 +93,7 @@ export async function setupHTTPServer(
     }
 
     let server = options.server;
-    if (!isNil(server)) {
+    if (isNil(server)) {
         server = createServer();
     }
 
@@ -116,3 +127,11 @@ export async function setupHTTPServer(
 
 export * from "./api";
 export * from "./pages";
+export {
+    CheckIfShouldTickPredicate,
+    IJobConfig,
+    IJobExecutionContext,
+    JobAction,
+    DebugAction as JobDebugAction,
+    DebugIcon as JobDebugIcon
+} from "@egomobile/jobs";

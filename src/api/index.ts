@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
-import type { Nilable, Optional } from "../types/internal";
+import type { Nilable, Optional } from "../types";
 import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
 
 /**
@@ -295,6 +295,5 @@ function toWithApiPropsAction(
         }
     };
 }
-
 
 export * from "./NextApiResponseBuilder";

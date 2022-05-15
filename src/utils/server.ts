@@ -13,13 +13,4 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IncomingMessage, ServerResponse } from "http";
-import type { UrlWithParsedQuery } from "url";
-
-export type NextRequestHandler = (req: IncomingMessage, res: ServerResponse, parsedUrl?: UrlWithParsedQuery) => Promise<any>;
-
-export type Nilable<T extends any = any> = T | null | undefined;
-
-export type Nullable<T extends any = any> = T | null;
-
-export type Optional<T extends any = any> = T | undefined;
+export * from "@egomobile/node-utils";
