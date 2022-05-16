@@ -182,11 +182,13 @@ export function createWithServerSideProps<TSession extends any = any>(
         const schema = options?.schema;
         if (!isNil(schema)) {
             if (!isSchema(schema)) {
-                throw new TypeError("options.schema must be a valid Joi schema");
+                throw new TypeError("options.schema must be a valid schema");
             }
         }
 
         if (isNil(action)) {
+            // default
+
             action = async () => {
                 return {
                     "props": {}
@@ -219,6 +221,8 @@ export function createWithServerSideProps<TSession extends any = any>(
             const { "req": request, "res": response } = nextContext;
 
             if (bodyParser) {
+                // parse input
+
                 const body = await readStream(request);
 
                 request.body = await bodyParser({
@@ -246,8 +250,12 @@ export function createWithServerSideProps<TSession extends any = any>(
                     const isPermissionGranted = await checkPermission(permissionCheckerContext);
                     if (isPermissionGranted) {
                         if (schema) {
+                            // check input
+
                             const validationResult = schema.validate(body);
                             if (validationResult.error) {
+                                // report validation error
+
                                 await onValidationFailed({
                                     "error": validationResult.error,
                                     request,
@@ -268,6 +276,8 @@ export function createWithServerSideProps<TSession extends any = any>(
                         });
                     }
                     else {
+                        // valid session, but no permission(s)
+
                         await onForbidden({
                             request,
                             response,
@@ -281,6 +291,8 @@ export function createWithServerSideProps<TSession extends any = any>(
                     }
                 }
                 else {
+                    // no valid session here
+
                     await onUnauthorized({
                         request,
                         response,
@@ -294,6 +306,7 @@ export function createWithServerSideProps<TSession extends any = any>(
                 }
             }
             catch (ex: any) {
+                // report error
                 await onError!({
                     "error": ex,
                     request,
@@ -312,6 +325,8 @@ export function createWithServerSideProps<TSession extends any = any>(
 
 function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): RequestErrorHandler {
     if (isNil(handler)) {
+        // default
+
         handler = async ({ error, response, statusCode, statusText }) => {
             response.statusCode = statusCode;
             response.statusMessage = statusText;
@@ -327,11 +342,14 @@ function toRequestErrorHandlerSafe(handler: Nilable<RequestErrorHandler>): Reque
         }
     }
 
+    // keep sure having an async function here
     return asAsync(handler);
 }
 
 function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): RequestFailedHandler {
     if (isNil(handler)) {
+        // use default
+
         handler = async ({ response, statusCode, statusText }) => {
             response.statusCode = statusCode;
             response.statusMessage = statusText;
@@ -345,5 +363,6 @@ function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): Req
         }
     }
 
+    // keep sure having an async function here
     return asAsync(handler);
 }

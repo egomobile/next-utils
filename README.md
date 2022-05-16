@@ -194,7 +194,6 @@ export const getStaticProps = withStaticProps(
   }
 );
 
-
 interface IMyStaticSidePageProps {
   bar?: number;
   foo: string;
@@ -249,6 +248,88 @@ await setupHTTPServer({
 });
 
 await server.listen();
+```
+
+### (Cron) Jobs
+
+You can also setup [jobs](https://github.com/egomobile/node-jobs), which can be run in the background, using [workers](https://nodejs.org/api/worker_threads.html).
+
+Create a `jobs` subfolder inside your Next.js project root.
+
+Then create a `foo.js` file there, which represents the job and its configuration:
+
+```javascript
+const { withWorker } = require("@egomobile/next-utils");
+
+const config = {
+  onTick: withWorker({
+    file: __filename,
+    data: {
+      foo: "buzz",
+      bar: 42,
+    },
+  }),
+
+  runOnInit: true,
+  time: "0 0 1 * * *", // every day on 01:00:00
+};
+
+module.exports = config;
+```
+
+The next thing is, to implement the worker part.
+
+Create a `workers/foo/index.js` file and use the following skeleton:
+
+```javascript
+// workerData.foo === "buzz"
+// workerData.bar === 42
+const { workerData } = require("worker_threads");
+
+async function main() {
+  // your action
+}
+
+main().catch((ex) => {
+  console.error("[UNHANDLED EXCEPTION]", ex);
+
+  process.exit(1);
+});
+```
+
+To load and start the jobs, execute `loadJobs()` in your [custom server logic](https://nextjs.org/docs/advanced-features/custom-server):
+
+```javascript
+const { loadJobs } = require("@egomobile/next-utils/jobs");
+
+const isDev = process.env.NODE_ENV === "development";
+
+async function main() {
+  // you can setup your server here
+
+  await loadJobs({
+    dir: path.join(__dirname, "jobs"),
+
+    filter: (name) => {
+      if (!name.startsWith("_")) {
+        // do not use filenames with leading _
+        if (name.endsWith(".js")) {
+          // only use .js files
+
+          // if we are in a development environment
+          // take all files
+          // otherwise do not include files
+          // with ending ".dev.js" in name
+          return isDev ? true : !name.endsWith(".dev.js");
+        }
+      }
+    },
+
+    timezone: "Europe/Berlin",
+  });
+}
+
+main().catch(console.error);
 ```
 
 ## Credits
