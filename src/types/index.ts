@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { List } from "@egomobile/api-utils/lib/types/internal";
 import type { Nilable, Optional } from "@egomobile/types";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { ValidationError as JoiValidationError } from "joi";
@@ -144,6 +145,51 @@ export interface ISessionPermissionCheckerPredicateContext<
 }
 
 /**
+ * An object, which contains extensions and helpers for
+ * simple response operations.
+ */
+export interface IWithResponseExtensions {
+    /**
+     * Sends a standarized API 409 response.
+     *
+     * @param {string} [message] The custom message. Default: 'Conflict'
+     */
+    sendConflict: (message?: string) => void;
+    /**
+     * Sends a standarized API response for a forbidden resource.
+     */
+    sendForbidden: () => void;
+    /**
+     * Sends data on a standarized way.
+     *
+     * @param {any} data The data to send.
+     */
+    sendData: (data: any) => void;
+    /**
+     * Sends an standarized API response for a list.
+     *
+     * @param {List<any>} items The items to send.
+     */
+    sendList: (items: List<any>) => void;
+    /**
+     * Sends a 204 response.
+     */
+    sendNoContent: () => void;
+    /**
+     * Sends a standarized API 404 response.
+     *
+     * @param {string} [message] The custom message. Default: 'Not Found'
+     */
+    sendNotFound: (message: string) => void;
+    /**
+     * Sends an API response for a body validation error.
+     *
+     * @param {JoiValidationError} validationError The error information.
+     */
+    sendValidationError: (validationError: JoiValidationError) => void;
+}
+
+/**
  * A function, handling Next.js server-side requests.
  */
 export type NextRequestHandler = (req: IncomingMessage, res: ServerResponse, parsedUrl?: Optional<UrlWithParsedQuery>) => Promise<any>;
@@ -230,3 +276,26 @@ export type SessionPermissionCheckerPredicate<TSession extends any = any> = (
 ) => any;
 
 export * from "@egomobile/types";
+
+export {
+    CheckIfShouldTickPredicate,
+    IJobConfig,
+    IJobExecutionContext,
+    JobAction,
+    DebugAction as JobDebugAction,
+    DebugIcon as JobDebugIcon
+} from "@egomobile/jobs";
+export {
+    AlternativesSchema,
+    AnySchema,
+    ArraySchema,
+    BinarySchema,
+    BooleanSchema,
+    DateSchema, ExtensionBoundSchema, FunctionSchema,
+    isSchema, LinkSchema,
+    NumberSchema,
+    ObjectPropertiesSchema,
+    ObjectSchema, PartialSchemaMap, Schema, SchemaFunction, SchemaInternals, SchemaLike,
+    SchemaLikeWithoutArray,
+    SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
+} from "joi";

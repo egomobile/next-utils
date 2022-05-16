@@ -16,11 +16,12 @@
 import { asAsync, isNil, toStringSafe } from "@egomobile/nodelike-utils";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
-import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker } from "../types";
+import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, IWithResponseExtensions, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker } from "../types";
 import { createFilterExpressionFunctions } from "../utils";
 import { toRequestValidationErrorHandlerSafe, toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
 import { NextApiResponseBuilder } from "./nextApiResponseBuilder";
 import type { AnySchema } from "joi";
+import { createResponseExtensions } from "../utils/server";
 
 /**
  * Options for 'createWithApiProps()' function.
@@ -75,7 +76,7 @@ interface IToWithApiPropsActionOptions {
 /**
  * Context for a 'WithApiPropsAction' function.
  */
-export interface IWithApiPropsActionContext<TSession extends any = any, TResponse extends any = any> {
+export interface IWithApiPropsActionContext<TSession extends any = any, TResponse extends any = any> extends IWithResponseExtensions {
     /**
      * Props for the PI action.
      */
@@ -318,7 +319,8 @@ export function createWithApiProps<TSession extends any = any>(
                             "props": {},
                             request,
                             response,
-                            session
+                            session,
+                            ...createResponseExtensions({ request, response })
                         });
                     }
                     else {
