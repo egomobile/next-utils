@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/next-utils",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Handy utils and extensions for Next.js",
     "main": "lib/index.js",
     "engines": {
