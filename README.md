@@ -16,12 +16,14 @@ npm install --save @egomobile/next-utils
 
 ## Usage
 
-### withApiProps
+### Middlewares
+
+#### withApiProps
 
 The `createWithApiProps()` function can create a kind of middleware, which is a wrapper for [API routes](https://nextjs.org/docs/api-routes/introduction) with enhanced features like session and/or permission check(s).
 
 ```typescript
-import { createWithApiProps } from "@egomobile/next-utils";
+import { createWithApiProps } from "@egomobile/next-utils/api";
 
 // s. options of 'createWithApiProps()'
 interface IUserSession {}
@@ -91,13 +93,13 @@ export default withApiProps(
 );
 ```
 
-### withServerSideProps
+#### withServerSideProps
 
 The `createWithServerSideProps()` function can create a kind of middleware, which is a wrapper for a [getServerSideProps](https://nextjs.org/docs/basic-features/data-fetching/get-server-side-props) with enhanced features like session and/or permission check(s).
 
 ```typescript
 import type { NextPage } from "next";
-import { createWithServerSideProps } from "@egomobile/next-utils";
+import { createWithServerSideProps } from "@egomobile/next-utils/pages/getServerSideProps";
 
 // s. options of 'createWithApiProps()'
 interface IUserSession {}
@@ -154,13 +156,13 @@ const MyServerSidePage: NextPage<IMyServerSidePageProps> = ({ foo, bar }) => {
 export default MyServerSidePage;
 ```
 
-### withStaticProps
+#### withStaticProps
 
 The `createWithServerSideProps()` function can create a kind of middleware, which is a wrapper for a [getStaticProps](https://nextjs.org/docs/basic-features/data-fetching/get-static-props) with enhanced features like default values for props.
 
 ```typescript
 import type { NextPage } from "next";
-import { createWithStaticProps } from "@egomobile/next-utils";
+import { createWithStaticProps } from "@egomobile/next-utils/pages/getStaticProps";
 
 // the best way is to create this 'withStaticProps()'
 // at a central place where all server side render
@@ -208,6 +210,45 @@ const MyStaticSidePage: NextPage<IMyStaticSidePageProps> = ({ foo, bar }) => {
 };
 
 export default MyStaticSidePage;
+```
+
+### Utilities
+
+Functions, classes and other utilities are separated into different branches: One for the [browser](./src/utils/browser.ts), another for the [server-side](./src/utils/server.ts) and a third one for [environment independent development](./src/utils/index.ts).
+
+```typescript
+import * as browserUtils from "@egomobile/next-utils/utils/browser";
+import * as crossUtils from "@egomobile/next-utils/utils";
+import * as serverUtils from "@egomobile/next-utils/utils/server";
+```
+
+### Improved HTTP request handling
+
+Next.js allows to use [custom server logic](https://nextjs.org/docs/advanced-features/custom-server).
+
+For this case, you can setup the [e.GO HTTP server](https://github.com/egomobile/node-http-server), which is very similar to [Express](https://github.com/expressjs/express), but up to [4 times faster](https://github.com/egomobile/node-http-server#benchmarks-).
+
+```typescript
+// npm i cookie-parser && npm i -D @types/cookie-parser
+import cookieParser from "cookie-parser";
+// npm i cors && npm i -D @types/cors
+import cors from "cors";
+import { createServer } from "@egomobile/http-server";
+import { setupHTTPServer } from "@egomobile/next-utils/server";
+
+// underlying HTTP server
+// which handles the requests
+const server = createServer();
+
+// add global middlewares
+server.use(cors());
+server.use(cookieParser());
+
+await setupHTTPServer({
+  server,
+});
+
+await server.listen();
 ```
 
 ## Credits

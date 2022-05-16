@@ -16,6 +16,7 @@
 import type { Nilable, Optional } from "@egomobile/types";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { ValidationError as JoiValidationError } from "joi";
+import type { UrlWithParsedQuery } from "url";
 
 /**
  * A body parser.
@@ -141,6 +142,11 @@ export interface ISessionPermissionCheckerPredicateContext<
      */
     session: TSession;
 }
+
+/**
+ * A function, handling Next.js server-side requests.
+ */
+export type NextRequestHandler = (req: IncomingMessage, res: ServerResponse, parsedUrl?: Optional<UrlWithParsedQuery>) => Promise<any>;
 
 /**
  * A repository of filter expression functions, which can be overwritten.
