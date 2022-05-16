@@ -19,7 +19,7 @@ import type { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
 import type { ISessionCheckerContext, ISessionPermissionCheckerPredicateContext, Nilable, Optional, OverwritableFilterExpressionFunctions, RequestErrorHandler, RequestFailedHandler, RequestValidationErrorHandler, SessionChecker, SessionPermissionChecker } from "../types";
 import { createFilterExpressionFunctions } from "../utils";
 import { toRequestValidationErrorHandlerSafe, toSessionCheckerSafe, toSessionPermissionCheckPredicateSafe } from "../utils/internal";
-import { NextApiResponseBuilder } from "./NextApiResponseBuilder";
+import { NextApiResponseBuilder } from "./nextApiResponseBuilder";
 import type { AnySchema } from "joi";
 
 /**
