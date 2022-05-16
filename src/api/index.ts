@@ -499,4 +499,4 @@ function toRequestFailedHandlerSafe(handler: Nilable<RequestFailedHandler>): Req
     return asAsync(handler);
 }
 
-export * from "./NextApiResponseBuilder";
+export * from "./nextApiResponseBuilder";
