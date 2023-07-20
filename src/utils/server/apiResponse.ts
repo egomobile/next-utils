@@ -13,13 +13,21 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { schema as _schema } from "@egomobile/http-server";
-import type { Root as JoiRoot } from "joi";
+// system imports
+import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiResponseBuilder } from "../../types";
 
 /**
- * Alias for 'joi' module.
+ * Creates a new API response builder.
+ *
+ * @param {NextApiRequest} request The request context.
+ * @param {NextApiResponse<any>} response The response context.
+ *
+ * @returns {NextApiResponseBuilder} The new builder instance.
  */
-export const schema = _schema as unknown as JoiRoot;
-
-export * from "./types";
-export * from "./middlewares";
+export function apiResponse(
+    request: NextApiRequest,
+    response: NextApiResponse<any>,
+): NextApiResponseBuilder {
+    return new NextApiResponseBuilder(request, response as any);
+}
