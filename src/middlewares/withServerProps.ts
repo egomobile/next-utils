@@ -92,6 +92,10 @@ export type WithServerPropsFactory<TContext = IWithServerPropsActionContext> = (
 export function createWithServerProps<TContext = IWithServerPropsActionContext>(
     createOptions?: Nilable<ICreateWithServerPropsOptions<TContext>>
 ): WithServerPropsFactory<TContext> {
+    const enhanceContext = createOptions?.enhanceContext ?
+        asAsync<EnhanceServerContext<TContext>>(createOptions?.enhanceContext) :
+        null;
+
     return (action?, options?) => {
         if (!action) {
             return wrapServerHandler(async () => {
@@ -103,19 +107,15 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
             });
         }
 
-        const enhanceContext = createOptions?.enhanceContext ?
-            asAsync<EnhanceServerContext<TContext>>(createOptions?.enhanceContext) :
-            null;
-
         return wrapServerHandler(async (context) => {
             try {
-                const actionContext = {
+                const actionContext: IWithServerPropsActionContext = {
                     "nextContext": context
-                } as unknown as TContext;
+                };
 
-                await enhanceContext?.(actionContext);
+                await enhanceContext?.(actionContext as unknown as TContext);
 
-                return await action(actionContext);
+                return await action(actionContext as unknown as TContext);
             }
             catch (error: any) {
                 context.res.statusCode = 500;

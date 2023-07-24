@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { asAsync } from "@egomobile/node-utils";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import type { ApiMiddleware } from "../types";
 import type { Nilable, Optional } from "../types/internal";
@@ -21,9 +22,17 @@ import { apiResponse } from "../utils/server/apiResponse";
 
 
 /**
+ * Function that enhances an API context.
+ *
+ * @param {TContext} context The context to anhance.
+ */
+export type EnhanceApiContext<TContext = IGetApiPropsActionContext<any>> =
+    (context: TContext) => void | PromiseLike<void>;
+
+/**
  * An action for a `getProps` value of an `IWithApiPropsOptions` instance.
  */
-export type GetApiPropsAction = (context: IGetApiPropsActionContext) => GetApiPropsActionResult;
+export type GetApiPropsAction<TContext = IGetApiPropsActionContext<any>> = (context: TContext) => GetApiPropsActionResult;
 
 /**
  * Possible value for a `props` property of a non-error result of
@@ -52,17 +61,11 @@ export type GetApiPropsActionErrorResultValue = true | string;
 /**
  * Options for `createWithApiProps()` function.
  */
-export interface ICreateWithApiPropsOptions {
-}
-
-/**
- * A context for a `WithApiPropsHandler` function.
- */
-export interface IWithApiPropsHandlerContext<TResponse = any> extends IGetApiPropsActionContext<TResponse> {
+export interface ICreateWithApiPropsOptions<TContext = IGetApiPropsActionContext<any>> {
     /**
-     * The props from a `getProps` call of a `GetApiPropsAction` action, if defined.
+     * The optional and custom function, that enhances the `TContext` based object.
      */
-    props: GetApiPropsActionProps;
+    enhanceContext?: Nilable<EnhanceApiContext<TContext>>;
 }
 
 /**
@@ -80,49 +83,59 @@ export interface IGetApiPropsActionContext<TResponse = any> {
 }
 
 /**
+ * Contains props.
+ */
+export interface IWithApiProps {
+    /**
+     * The stored props.
+     */
+    props: GetApiPropsActionProps;
+}
+
+/**
  * Options for a `withApiProps()` function call.
  */
-export interface IWithApiPropsOptions<TResponse = any> {
+export interface IWithApiPropsOptions<TContext = IGetApiPropsActionContext<any>, TResponse = any> {
     /**
      * The action for a CONNECT request.
      */
-    CONNECT: Nilable<WithApiPropsHandler<TResponse>>;
+    CONNECT: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a DELETE request.
      */
-    DELETE: Nilable<WithApiPropsHandler<TResponse>>;
+    DELETE: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a GET request.
      */
-    GET: Nilable<WithApiPropsHandler<TResponse>>;
+    GET: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * A function which returns the props for all `WithApiPropsHandler`s.
      */
-    getProps: GetApiPropsAction;
+    getProps: GetApiPropsAction<TContext>;
     /**
      * The action for a HEAD request.
      */
-    HEAD: Nilable<WithApiPropsHandler<TResponse>>;
+    HEAD: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a OPTIONS request.
      */
-    OPTIONS: Nilable<WithApiPropsHandler<TResponse>>;
+    OPTIONS: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a PATCH request.
      */
-    PATCH: Nilable<WithApiPropsHandler<TResponse>>;
+    PATCH: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a POST request.
      */
-    POST: Nilable<WithApiPropsHandler<TResponse>>;
+    POST: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a PUT request.
      */
-    PUT: Nilable<WithApiPropsHandler<TResponse>>;
+    PUT: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * The action for a TRACE request.
      */
-    TRACE: Nilable<WithApiPropsHandler<TResponse>>;
+    TRACE: Nilable<WithApiPropsHandler<TContext & IWithApiProps, TResponse>>;
     /**
      * One or more middlewares to use.
      */
@@ -136,8 +149,8 @@ export interface IWithApiPropsOptions<TResponse = any> {
  *
  * @returns {PromiseLike<TResponse>} The promise with the response data.
  */
-export type WithApiPropsHandler<TResponse = any> =
-    (context: IWithApiPropsHandlerContext<TResponse>) => PromiseLike<TResponse>;
+export type WithApiPropsHandler<TContext = IGetApiPropsActionContext<any>, TResponse = any> =
+    (context: TContext) => PromiseLike<TResponse>;
 
 /**
  * A function, which generates which generates a `NextApiHandler<TResponse>` function
@@ -147,8 +160,8 @@ export type WithApiPropsHandler<TResponse = any> =
  *
  * @returns {NextApiHandler<TResponse>} The new function.
  */
-export type WithApiPropsFactory<TResponse = any> =
-    (options: Partial<IWithApiPropsOptions>) => NextApiHandler<TResponse>;
+export type WithApiPropsFactory<TContext = IGetApiPropsActionContext<any>> =
+    <TResponse = any>(options: Partial<IWithApiPropsOptions<TContext, TResponse>>) => NextApiHandler<TResponse>;
 
 /**
  * Creates a new factory, which generates a `NextApiHandler<TResponse>` function
@@ -159,8 +172,12 @@ export type WithApiPropsFactory<TResponse = any> =
  * @returns {WithApiPropsFactory} The new factory function.
  */
 export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
-    createOptions?: Nilable<ICreateWithApiPropsOptions>
+    createOptions?: Nilable<ICreateWithApiPropsOptions<TContext>>
 ): WithApiPropsFactory<TContext> {
+    const enhanceContext = createOptions?.enhanceContext ?
+        asAsync<EnhanceApiContext<TContext>>(createOptions?.enhanceContext) :
+        null;
+
     return (options) => {
         const getProps = options.getProps || (async () => {
             return {
@@ -179,7 +196,9 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                         response
                     };
 
-                    const propsResult: any = await getProps(getPropsContext);
+                    await enhanceContext?.(getPropsContext as unknown as TContext);
+
+                    const propsResult: any = await getProps(getPropsContext as unknown as TContext);
 
                     const badRequest = propsResult.badRequest as Optional<GetApiPropsActionErrorResultValue>;
                     const notFound = propsResult.notFound as Optional<GetApiPropsActionErrorResultValue>;
@@ -219,11 +238,11 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                             .send();
                     }
                     else {
-                        const handlerContext: IWithApiPropsHandlerContext<any> = {
-                            "props": propsResult.props,
-                            request,
-                            response
-                        };
+                        const handlerContext = {
+                            ...getPropsContext,
+
+                            "props": propsResult.props
+                        } as unknown as (TContext & IWithApiProps);
 
                         await handler(handlerContext);
                     }
