@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { asAsync } from "@egomobile/node-utils";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import type { Nilable } from "../types/internal";
 import type { ServerMiddleware } from "../types";
@@ -20,9 +21,21 @@ import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
 
 
 /**
+ * Function that enhances a server context.
+ *
+ * @param {TContext} context The context to anhance.
+ */
+export type EnhanceServerContext<TContext = IWithServerPropsActionContext> =
+    (context: TContext) => void | PromiseLike<void>;
+
+/**
  * Options for `createWithServerProps()` function.
  */
-export interface ICreateWithServerPropsOptions {
+export interface ICreateWithServerPropsOptions<TContext = IWithServerPropsActionContext> {
+    /**
+     * The optional and custom function, that enhances the `TContext` based object.
+     */
+    enhanceContext?: Nilable<EnhanceServerContext<TContext>>;
 }
 
 /**
@@ -50,8 +63,8 @@ export interface IWithServerPropsOptions {
  *
  * @param {IWithServerPropsActionContext} context The context.
  */
-export type WithServerPropsAction = (
-    context: IWithServerPropsActionContext,
+export type WithServerPropsAction<TContext = IWithServerPropsActionContext> = (
+    context: TContext,
 ) => Promise<GetServerSidePropsResult<any>>;
 
 /**
@@ -63,8 +76,8 @@ export type WithServerPropsAction = (
  *
  * @returns {GetServerSideProps} The new function.
  */
-export type WithServerPropsFactory = (
-    action?: Nilable<WithServerPropsAction>,
+export type WithServerPropsFactory<TContext = IWithServerPropsActionContext> = (
+    action?: Nilable<WithServerPropsAction<TContext>>,
     options?: Partial<Nilable<IWithServerPropsOptions>>
 ) => GetServerSideProps;
 
@@ -76,23 +89,39 @@ export type WithServerPropsFactory = (
  *
  * @returns {WithServerPropsFactory} The new factory function.
  */
-export function createWithServerProps(createOptions?: Nilable<ICreateWithServerPropsOptions>): WithServerPropsFactory {
+export function createWithServerProps<TContext = IWithServerPropsActionContext>(
+    createOptions?: Nilable<ICreateWithServerPropsOptions<TContext>>
+): WithServerPropsFactory<TContext> {
     return (action?, options?) => {
+        if (!action) {
+            return wrapServerHandler(async () => {
+                return {
+                    "props": {}
+                };
+            }, {
+                "use": options?.use
+            });
+        }
+
+        const enhanceContext = createOptions?.enhanceContext ?
+            asAsync<EnhanceServerContext<TContext>>(createOptions?.enhanceContext) :
+            null;
+
         return wrapServerHandler(async (context) => {
             try {
-                if (!action) {
-                    return {
-                        "props": {}
-                    };
-                }
-
-                return action({
+                const actionContext = {
                     "nextContext": context
-                });
+                } as unknown as TContext;
+
+                await enhanceContext?.(actionContext);
+
+                return await action(actionContext);
             }
             catch (error: any) {
                 context.res.statusCode = 500;
-                context.res.end(`${error?.stack}`);
+                context.res.end(`[${error?.name}] ${error?.message}
+
+${error?.stack}`);
 
                 return {
                     "props": {}
