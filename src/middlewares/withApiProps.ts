@@ -19,6 +19,7 @@ import type { Nilable, Optional } from "../types/internal";
 import { wrapApiHandler } from "../utils/internal/wrapApiHandler";
 import { apiResponse } from "../utils/server/apiResponse";
 
+
 /**
  * An action for a `getProps` value of an `IWithApiPropsOptions` instance.
  */
@@ -49,21 +50,19 @@ export type GetApiPropsActionResultValue =
 export type GetApiPropsActionErrorResultValue = true | string;
 
 /**
+ * Options for `createWithApiProps()` function.
+ */
+export interface ICreateWithApiPropsOptions {
+}
+
+/**
  * A context for a `WithApiPropsHandler` function.
  */
-export interface IWithApiPropsHandlerContext<TResponse = any> {
+export interface IWithApiPropsHandlerContext<TResponse = any> extends IGetApiPropsActionContext<TResponse> {
     /**
      * The props from a `getProps` call of a `GetApiPropsAction` action, if defined.
      */
     props: GetApiPropsActionProps;
-    /**
-     * The request context.
-     */
-    request: NextApiRequest;
-    /**
-     * The response context.
-     */
-    response: NextApiResponse<TResponse>;
 }
 
 /**
@@ -140,10 +139,28 @@ export interface IWithApiPropsOptions<TResponse = any> {
 export type WithApiPropsHandler<TResponse = any> =
     (context: IWithApiPropsHandlerContext<TResponse>) => PromiseLike<TResponse>;
 
+/**
+ * A function, which generates which generates a `NextApiHandler<TResponse>` function
+ * that is used for API endpoints in Next.js.
+ *
+ * @param {Partial<IWithApiPropsOptions>} options Custom options, like middlewares.
+ *
+ * @returns {NextApiHandler<TResponse>} The new function.
+ */
 export type WithApiPropsFactory<TResponse = any> =
     (options: Partial<IWithApiPropsOptions>) => NextApiHandler<TResponse>;
 
-export function createWithApiProps(): WithApiPropsFactory {
+/**
+ * Creates a new factory, which generates a `NextApiHandler<TResponse>` function
+ * that is used for API endpoints in Next.js.
+ *
+ * @param {Nilable<ICreateWithApiPropsOptions>} [createOptions] Custom options.
+ *
+ * @returns {WithApiPropsFactory} The new factory function.
+ */
+export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
+    createOptions?: Nilable<ICreateWithApiPropsOptions>
+): WithApiPropsFactory<TContext> {
     return (options) => {
         const getProps = options.getProps || (async () => {
             return {

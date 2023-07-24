@@ -20,6 +20,12 @@ import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
 
 
 /**
+ * Options for `createWithServerProps()` function.
+ */
+export interface ICreateWithServerPropsOptions {
+}
+
+/**
  * A context for a `WithServerPropsAction` action.
  */
 export interface IWithServerPropsActionContext {
@@ -54,6 +60,8 @@ export type WithServerPropsAction = (
  *
  * @param {Nilable<WithServerPropsAction>} [action] The optional and custom action to execute on the server.
  * @param {Partial<Nilable<IWithServerPropsOptions>>} [options] Custom options, like middlewares.
+ *
+ * @returns {GetServerSideProps} The new function.
  */
 export type WithServerPropsFactory = (
     action?: Nilable<WithServerPropsAction>,
@@ -64,9 +72,11 @@ export type WithServerPropsFactory = (
  * Creates a new factory, which generates a `GetServerSideProps` function
  * that is used for SSR rendered pages in Next.js.
  *
+ * @param {Nilable<ICreateWithServerPropsOptions>} [createOptions] Custom options.
+ *
  * @returns {WithServerPropsFactory} The new factory function.
  */
-export function createWithServerProps(): WithServerPropsFactory {
+export function createWithServerProps(createOptions?: Nilable<ICreateWithServerPropsOptions>): WithServerPropsFactory {
     return (action?, options?) => {
         return wrapServerHandler(async (context) => {
             try {
