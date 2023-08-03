@@ -28,11 +28,42 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 export type ApiMiddleware = (request: NextApiRequest, response: NextApiResponse<any>, next: MiddlewareNextFunction) => any;
 
 /**
+ * A context for a server error handler.
+ */
+export interface IServerErrorHandlerContext {
+    /**
+     * The thrown error.
+     */
+    error: any;
+    /**
+     * Also execute default logic or not.
+     *
+     * @default `true`
+     */
+    executeDefault: boolean;
+    /**
+     * The request context.
+     */
+    request: IncomingMessage;
+    /**
+     * The response context.
+     */
+    response: ServerResponse;
+}
+
+/**
  * A next function for a middleware.
  *
  * @param {any} [error] The error, if occurred.
  */
 export type MiddlewareNextFunction = (error?: any) => any;
+
+/**
+ * An error handler.
+ *
+ * @param {IServerErrorHandlerContext} context The context.
+ */
+export type ServerErrorHandler = (context: IServerErrorHandlerContext) => any;
 
 /**
  * Describes a middleware for an server rendered page.

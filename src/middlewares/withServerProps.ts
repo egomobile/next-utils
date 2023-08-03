@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { asAsync } from "@egomobile/node-utils";
+import { asAsync, toStringSafe } from "@egomobile/node-utils";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import type { Nilable } from "../types/internal";
-import type { ServerMiddleware } from "../types";
+import type { IServerErrorHandlerContext, ServerErrorHandler, ServerMiddleware } from "../types";
 import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
 
 
@@ -36,6 +36,10 @@ export interface ICreateWithServerPropsOptions<TContext = IWithServerPropsAction
      * The optional and custom function, that enhances the `TContext` based object.
      */
     enhanceContext?: Nilable<EnhanceServerContext<TContext>>;
+    /**
+     * Custom and additional error handler.
+     */
+    onError?: Nilable<ServerErrorHandler>;
 }
 
 /**
@@ -81,6 +85,7 @@ export type WithServerPropsFactory<TContext = IWithServerPropsActionContext> = (
     options?: Partial<Nilable<IWithServerPropsOptions>>
 ) => GetServerSideProps;
 
+
 /**
  * Creates a new factory, which generates a `GetServerSideProps` function
  * that is used for SSR rendered pages in Next.js.
@@ -94,6 +99,9 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 ): WithServerPropsFactory<TContext> {
     const enhanceContext = createOptions?.enhanceContext ?
         asAsync<EnhanceServerContext<TContext>>(createOptions?.enhanceContext) :
+        null;
+    const onError = createOptions?.onError ?
+        asAsync<ServerErrorHandler>(createOptions.onError) :
         null;
 
     return (action?, options?) => {
@@ -117,11 +125,37 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 
                 return await action(actionContext as unknown as TContext);
             }
-            catch (error: any) {
-                context.res.statusCode = 500;
-                context.res.end(`[${error?.name}] ${error?.message}
+            catch (ex: any) {
+                let error = ex;
+                if (!(error instanceof Error)) {
+                    error = new Error(`UNCAUGHT ERROR: ${toStringSafe(error)}`);
+                }
 
-${error?.stack}`);
+                const errorCtx: IServerErrorHandlerContext = {
+                    error,
+                    "executeDefault": true,
+                    "request": context.req,
+                    "response": context.res
+                };
+
+                await onError?.(errorCtx);
+
+                if (errorCtx.executeDefault) {
+                    const errorMsg = Buffer.from(
+                        `[${error?.name}] ${error?.message}
+
+${error?.stack}`, "utf8"
+                    );
+
+                    if (!context.res.headersSent) {
+                        context.res.writeHead(500, {
+                            "Content-Type": "text/plain; charset=UTF-8",
+                            "Content-Length": String(errorMsg.length)
+                        });
+                    }
+
+                    context.res.end(errorMsg);
+                }
 
                 return {
                     "props": {}

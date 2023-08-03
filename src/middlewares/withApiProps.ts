@@ -15,10 +15,11 @@
 
 import { asAsync } from "@egomobile/node-utils";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import type { ApiMiddleware } from "../types";
+import type { ApiMiddleware, IServerErrorHandlerContext, ServerErrorHandler } from "../types";
 import type { Nilable, Optional } from "../types/internal";
-import { wrapApiHandler } from "../utils/internal/wrapApiHandler";
 import { apiResponse } from "../utils/server/apiResponse";
+import { wrapApiHandler } from "../utils/internal/wrapApiHandler";
+import { asError } from "../utils/internal/asError";
 
 
 /**
@@ -66,6 +67,10 @@ export interface ICreateWithApiPropsOptions<TContext = IGetApiPropsActionContext
      * The optional and custom function, that enhances the `TContext` based object.
      */
     enhanceContext?: Nilable<EnhanceApiContext<TContext>>;
+    /**
+     * Custom and additional error handler.
+     */
+    onError?: Nilable<ServerErrorHandler>;
 }
 
 /**
@@ -163,6 +168,7 @@ export type WithApiPropsHandler<TContext = IGetApiPropsActionContext<any>, TResp
 export type WithApiPropsFactory<TContext = IGetApiPropsActionContext<any>> =
     <TResponse = any>(options: Partial<IWithApiPropsOptions<TContext, TResponse>>) => NextApiHandler<TResponse>;
 
+
 /**
  * Creates a new factory, which generates a `NextApiHandler<TResponse>` function
  * that is used for API endpoints in Next.js.
@@ -175,7 +181,10 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
     createOptions?: Nilable<ICreateWithApiPropsOptions<TContext>>
 ): WithApiPropsFactory<TContext> {
     const enhanceContext = createOptions?.enhanceContext ?
-        asAsync<EnhanceApiContext<TContext>>(createOptions?.enhanceContext) :
+        asAsync<EnhanceApiContext<TContext>>(createOptions.enhanceContext) :
+        null;
+    const onError = createOptions?.onError ?
+        asAsync<ServerErrorHandler>(createOptions.onError) :
         null;
 
     return (options) => {
@@ -263,16 +272,31 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                 }
             }
             catch (error: any) {
-                apiResponse(request, response)
-                    .noSuccess()
-                    .withStatus(500)
-                    .addMessage({
-                        "code": 500,
-                        "type": "error",
-                        "message": `${error}\n\n${error?.stack}`,
-                        "internal": true
-                    })
-                    .send();
+                error = asError(error);
+
+                const errorCtx: IServerErrorHandlerContext = {
+                    error,
+                    "executeDefault": true,
+                    request,
+                    response
+                };
+
+                await onError?.(errorCtx);
+
+                if (errorCtx.executeDefault) {
+                    apiResponse(request, response)
+                        .noSuccess()
+                        .withStatus(500)
+                        .addMessage({
+                            "code": 500,
+                            "type": "error",
+                            "message": `[${error?.name}] ${error?.message}
+
+${error?.stack}`,
+                            "internal": true
+                        })
+                        .send();
+                }
             }
         });
     };
