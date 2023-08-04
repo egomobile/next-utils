@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.9.0
+
+- **BREAKING CHANGE**: improve use of execution contextes of `EnhanceApiContext`
+
 ## 0.8.0
 
 - **BREAKING CHANGE**: improve use of execution contextes of `EnhanceApiContext` and `EnhanceServerContext`
