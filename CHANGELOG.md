@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.4.0
+
+- `EnhanceApiContext` and `EnhanceServerContext` can return `false` now, to stop execution
+
 ## 0.3.0
 
 - refactor and upgrade for [Next.js 13+](https://nextjs.org/blog/next-13)
