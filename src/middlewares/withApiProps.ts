@@ -351,7 +351,7 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                         return;
                     }
 
-                    const propsResult: any = await getProps(getPropsContext as unknown as TContext);
+                    const propsResult: any = await getProps(enhanceExecCtx.context as unknown as TContext);
 
                     const badRequest = propsResult.badRequest as Optional<GetApiPropsActionErrorResultValue>;
                     const notFound = propsResult.notFound as Optional<GetApiPropsActionErrorResultValue>;
@@ -392,7 +392,7 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                     }
                     else {
                         const handlerContext = {
-                            ...getPropsContext,
+                            ...enhanceExecCtx.context,
 
                             "props": propsResult.props
                         } as unknown as (TContext & IWithApiProps);

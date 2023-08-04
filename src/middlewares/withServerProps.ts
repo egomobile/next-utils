@@ -163,7 +163,7 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                     };
                 }
 
-                return await action(actionContext as unknown as TContext);
+                return await action(enhanceExecCtx.context as unknown as TContext);
             }
             catch (ex: any) {
                 let error = ex;
