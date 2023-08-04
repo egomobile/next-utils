@@ -18,6 +18,8 @@ import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsR
 import type { Nilable, Nullable } from "../types/internal";
 import type { IServerErrorHandlerContext, ServerErrorHandler, ServerMiddleware } from "../types";
 import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
+import { deepMerge } from "../utils/internal/deepMerge";
+import { cloneObj } from "../utils/internal/cloneObj";
 
 
 /**
@@ -167,10 +169,10 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 
                 const resultProps = await action(enhanceExecCtx.context as unknown as TContext);
 
-                return {
-                    ...enhanceExecCtx.result,
-                    ...resultProps
-                };
+                return deepMerge(
+                    cloneObj(enhanceExecCtx.result),
+                    cloneObj(resultProps)
+                );
             }
             catch (ex: any) {
                 let error = ex;
