@@ -55,9 +55,9 @@ export interface IEnhanceServerContextExecutionContext<TContext = IWithServerPro
      */
     options: Nullable<Partial<IWithServerPropsOptions>>;
     /**
-     * The props to return if execution will be stopped.
+     * The props result.
      */
-    props: Record<string, any>;
+    result: GetServerSidePropsResult<any>;
     /**
      * Gets or sets if the execution should be stopped or not.
      *
@@ -151,7 +151,9 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                 const enhanceExecCtx: IEnhanceServerContextExecutionContext<TContext> = {
                     "context": actionContext as any,
                     "options": copyOfOptions as any,
-                    "props": {},
+                    "result": {
+                        "props": {}
+                    },
                     "shouldStop": false
                 };
 
@@ -159,14 +161,14 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 
                 if (enhanceExecCtx.shouldStop) {
                     return {
-                        ...(enhanceExecCtx.props ?? {})
+                        ...enhanceExecCtx.result
                     };
                 }
 
                 const resultProps = await action(enhanceExecCtx.context as unknown as TContext);
 
                 return {
-                    ...(enhanceExecCtx.props ?? {}),
+                    ...enhanceExecCtx.result,
                     ...resultProps
                 };
             }
