@@ -15,8 +15,9 @@
 
 import { asAsync } from "@egomobile/node-utils";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
+import type { ValidationError as JoiValidationError } from "joi";
 import type { ApiMiddleware, IServerErrorHandlerContext, ServerErrorHandler } from "../types";
-import type { Nilable, Nullable, Optional } from "../types/internal";
+import type { List, Nilable, Nullable, Optional } from "../types/internal";
 import { apiResponse } from "../utils/server/apiResponse";
 import { wrapApiHandler } from "../utils/internal/wrapApiHandler";
 import { asError } from "../utils/internal/asError";
@@ -105,6 +106,46 @@ export interface IGetApiPropsActionContext<TResponse = any> {
      * The response context.
      */
     response: NextApiResponse<TResponse>;
+    /**
+     * Sends a standarized API 409 response.
+     *
+     * @param {string} [message] The custom message. Default: 'Conflict'
+     */
+    sendConflict: (message?: string) => void;
+    /**
+     * Sends a standarized API response for a forbidden resource.
+     */
+    sendForbidden: () => void;
+    /**
+     * Sends data on a standarized way.
+     *
+     * @param {any} data The data to send.
+     * @param {number} [code=200] The custom response status code.
+     */
+    sendData: (data: any, code?: number) => void;
+    /**
+     * Sends an standarized API response for a list.
+     *
+     * @param {List<any>} items The items to send.
+     * @param {number} [code=200] The custom response status code.
+     */
+    sendList: (items: List<any>, code?: number) => void;
+    /**
+     * Sends a 204 response.
+     */
+    sendNoContent: () => void;
+    /**
+     * Sends a standarized API 404 response.
+     *
+     * @param {string} [message] The custom message. Default: 'Not Found'
+     */
+    sendNotFound: (message: string) => void;
+    /**
+     * Sends an API response for a body validation error.
+     *
+     * @param {JoiValidationError} validationError The error information.
+     */
+    sendValidationError: (validationError: JoiValidationError) => void;
 }
 
 /**
@@ -222,7 +263,78 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                 if (typeof handler === "function") {
                     const getPropsContext: IGetApiPropsActionContext<any> = {
                         request,
-                        response
+                        response,
+                        "sendConflict": (message = "Conflict") => {
+                            apiResponse(request, response)
+                                .noSuccess()
+                                .addMessage({
+                                    "code": 40901,
+                                    "type": "error",
+                                    "internal": true,
+                                    message
+                                })
+                                .withStatus(409)
+                                .send();
+                        },
+                        "sendData": (data, code = 200) => {
+                            apiResponse(request, response)
+                                .withStatus(code)
+                                .withData(data)
+                                .send();
+                        },
+                        "sendForbidden": () => {
+                            apiResponse(request, response)
+                                .noSuccess()
+                                .withStatus(403)
+                                .addMessage({
+                                    "code": 40301,
+                                    "type": "error",
+                                    "message": "Forbidden",
+                                    "internal": true
+                                })
+                                .send();
+                        },
+                        "sendList": (items, code = 200) => {
+                            apiResponse(request, response)
+                                .withStatus(code)
+                                .withList({
+                                    items
+                                })
+                                .send();
+                        },
+                        "sendNoContent": () => {
+                            if (!response.headersSent) {
+                                response.writeHead(204, {
+                                    "Content-Length": "0"
+                                });
+                            }
+
+                            response.end();
+                        },
+                        "sendNotFound": (message = "Not Found") => {
+                            apiResponse(request, response)
+                                .noSuccess()
+                                .withStatus(404)
+                                .addMessage({
+                                    "code": 40401,
+                                    "type": "error",
+                                    message,
+                                    "internal": true
+                                })
+                                .send();
+                        },
+                        "sendValidationError": (validationError: JoiValidationError) => {
+                            apiResponse(request, response)
+                                .noSuccess()
+                                .addMessage({
+                                    "code": 40001,
+                                    "type": "error",
+                                    "internal": true,
+                                    "message": validationError.message
+                                })
+                                .withStatus(400)
+                                .send();
+                        }
                     };
                     const copyOfOptions = options ? {
                         ...options

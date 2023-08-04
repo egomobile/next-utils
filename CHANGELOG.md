@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.7.0
+
+- add shorthand functions for API handlers and integrate [joi](https://www.npmjs.com/package/joi)
+
 ## 0.6.0
 
 - improve `EnhanceApiContext` and `EnhanceServerContext` using execution context objects instead
