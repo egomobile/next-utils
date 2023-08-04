@@ -24,11 +24,9 @@ import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
  * Function that enhances a server context.
  *
  * @param {TContext} context The context to anhance.
- *
- * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
  */
-export type EnhanceServerContext<TContext = IWithServerPropsActionContext, TResponse = any> =
-    (context: TContext, options: Nullable<Partial<IWithServerPropsOptions>>) => false | void | PromiseLike<void | false>;
+export type EnhanceServerContext<TContext = IWithServerPropsActionContext> =
+    (context: IEnhanceServerContextExecutionContext<TContext>) => void | PromiseLike<void>;
 
 /**
  * Options for `createWithServerProps()` function.
@@ -42,6 +40,30 @@ export interface ICreateWithServerPropsOptions<TContext = IWithServerPropsAction
      * Custom and additional error handler.
      */
     onError?: Nilable<ServerErrorHandler>;
+}
+
+/**
+ * Context for an `EnhanceServerContext` function.
+ */
+export interface IEnhanceServerContextExecutionContext<TContext = IWithServerPropsActionContext> {
+    /**
+     * The context to enhance.
+     */
+    context: TContext;
+    /**
+     * The options.
+     */
+    options: Nullable<Partial<IWithServerPropsOptions>>;
+    /**
+     * The props to return if execution will be stopped.
+     */
+    props: Record<string, any>;
+    /**
+     * Gets or sets if the execution should be stopped or not.
+     *
+     * @default `false`
+     */
+    shouldStop: boolean;
 }
 
 /**
@@ -126,10 +148,18 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                     ...options
                 } : null;
 
-                const shouldStop = ((await enhanceContext?.(actionContext as unknown as TContext, copyOfOptions)) as any) === false;
-                if (shouldStop) {
+                const enhanceExecCtx: IEnhanceServerContextExecutionContext<TContext> = {
+                    "context": actionContext as any,
+                    "options": copyOfOptions as any,
+                    "props": {},
+                    "shouldStop": false
+                };
+
+                await enhanceContext?.(enhanceExecCtx);
+
+                if (enhanceExecCtx.shouldStop) {
                     return {
-                        "props": {}
+                        "props": enhanceExecCtx.props ?? {}
                     };
                 }
 

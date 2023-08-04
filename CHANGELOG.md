@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.6.0
+
+- improve `EnhanceApiContext` and `EnhanceServerContext` using execution context objects instead
+
 ## 0.5.0
 
 - add `options` argument to `EnhanceApiContext` and `EnhanceServerContext`

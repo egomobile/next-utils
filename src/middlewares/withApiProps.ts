@@ -25,13 +25,10 @@ import { asError } from "../utils/internal/asError";
 /**
  * Function that enhances an API context.
  *
- * @param {TContext} context The context to anhance.
- * @param {Nullable<Partial<IWithApiPropsOptions<TContext, TResponse>>>} options The underlying options.
- *
- * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
+ * @param {IEnhanceApiContextContext<TContext, TResponse>} context The execution context.
  */
 export type EnhanceApiContext<TContext = IGetApiPropsActionContext<any>, TResponse = any> =
-    (context: TContext, options: Nullable<Partial<IWithApiPropsOptions<TContext, TResponse>>>) => false | void | PromiseLike<void | false>;
+    (context: IEnhanceApiContextExecutionContext<TContext, TResponse>) => void | PromiseLike<void>;
 
 /**
  * An action for a `getProps` value of an `IWithApiPropsOptions` instance.
@@ -74,6 +71,26 @@ export interface ICreateWithApiPropsOptions<TContext = IGetApiPropsActionContext
      * Custom and additional error handler.
      */
     onError?: Nilable<ServerErrorHandler>;
+}
+
+/**
+ * Context for an `EnhanceApiContext` function.
+ */
+export interface IEnhanceApiContextExecutionContext<TContext = IGetApiPropsActionContext<any>, TResponse = any> {
+    /**
+     * The context to enhance.
+     */
+    context: TContext;
+    /**
+     * The options.
+     */
+    options: Nullable<Partial<IWithApiPropsOptions<TContext, TResponse>>>;
+    /**
+     * Gets or sets if the execution should be stopped or not.
+     *
+     * @default `false`
+     */
+    shouldStop: boolean;
 }
 
 /**
@@ -211,8 +228,14 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                         ...options
                     } : null;
 
-                    const shouldStop = ((await enhanceContext?.(getPropsContext as unknown as TContext, copyOfOptions)) as any) === false;
-                    if (shouldStop) {
+                    const enhanceExecCtx: IEnhanceApiContextExecutionContext<TContext, any> = {
+                        "context": getPropsContext as any,
+                        "options": copyOfOptions as any,
+                        "shouldStop": false
+                    };
+
+                    await enhanceContext?.(enhanceExecCtx);
+                    if (enhanceExecCtx.shouldStop) {
                         return;
                     }
 
