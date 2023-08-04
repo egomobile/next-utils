@@ -16,7 +16,7 @@
 import { asAsync } from "@egomobile/node-utils";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import type { ApiMiddleware, IServerErrorHandlerContext, ServerErrorHandler } from "../types";
-import type { Nilable, Optional } from "../types/internal";
+import type { Nilable, Nullable, Optional } from "../types/internal";
 import { apiResponse } from "../utils/server/apiResponse";
 import { wrapApiHandler } from "../utils/internal/wrapApiHandler";
 import { asError } from "../utils/internal/asError";
@@ -26,11 +26,12 @@ import { asError } from "../utils/internal/asError";
  * Function that enhances an API context.
  *
  * @param {TContext} context The context to anhance.
+ * @param {Nullable<Partial<IWithApiPropsOptions<TContext, TResponse>>>} options The underlying options.
  *
  * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
  */
-export type EnhanceApiContext<TContext = IGetApiPropsActionContext<any>> =
-    (context: TContext) => false | void | PromiseLike<void | false>;
+export type EnhanceApiContext<TContext = IGetApiPropsActionContext<any>, TResponse = any> =
+    (context: TContext, options: Nullable<Partial<IWithApiPropsOptions<TContext, TResponse>>>) => false | void | PromiseLike<void | false>;
 
 /**
  * An action for a `getProps` value of an `IWithApiPropsOptions` instance.
@@ -206,8 +207,11 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                         request,
                         response
                     };
+                    const copyOfOptions = options ? {
+                        ...options
+                    } : null;
 
-                    const shouldStop = ((await enhanceContext?.(getPropsContext as unknown as TContext)) as any) === false;
+                    const shouldStop = ((await enhanceContext?.(getPropsContext as unknown as TContext, copyOfOptions)) as any) === false;
                     if (shouldStop) {
                         return;
                     }

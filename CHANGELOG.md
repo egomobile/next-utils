@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.5.0
+
+- add `options` argument to `EnhanceApiContext` and `EnhanceServerContext`
+
 ## 0.4.0
 
 - `EnhanceApiContext` and `EnhanceServerContext` can return `false` now, to stop execution

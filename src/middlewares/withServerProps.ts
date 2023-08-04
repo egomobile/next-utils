@@ -15,7 +15,7 @@
 
 import { asAsync, toStringSafe } from "@egomobile/node-utils";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import type { Nilable } from "../types/internal";
+import type { Nilable, Nullable } from "../types/internal";
 import type { IServerErrorHandlerContext, ServerErrorHandler, ServerMiddleware } from "../types";
 import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
 
@@ -27,8 +27,8 @@ import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
  *
  * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
  */
-export type EnhanceServerContext<TContext = IWithServerPropsActionContext> =
-    (context: TContext) => false | void | PromiseLike<void | false>;
+export type EnhanceServerContext<TContext = IWithServerPropsActionContext, TResponse = any> =
+    (context: TContext, options: Nullable<Partial<IWithServerPropsOptions>>) => false | void | PromiseLike<void | false>;
 
 /**
  * Options for `createWithServerProps()` function.
@@ -122,8 +122,11 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                 const actionContext: IWithServerPropsActionContext = {
                     "nextContext": context
                 };
+                const copyOfOptions = options ? {
+                    ...options
+                } : null;
 
-                const shouldStop = ((await enhanceContext?.(actionContext as unknown as TContext)) as any) === false;
+                const shouldStop = ((await enhanceContext?.(actionContext as unknown as TContext, copyOfOptions)) as any) === false;
                 if (shouldStop) {
                     return {
                         "props": {}
