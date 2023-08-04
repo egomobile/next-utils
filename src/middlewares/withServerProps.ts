@@ -24,9 +24,11 @@ import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
  * Function that enhances a server context.
  *
  * @param {TContext} context The context to anhance.
+ *
+ * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
  */
 export type EnhanceServerContext<TContext = IWithServerPropsActionContext> =
-    (context: TContext) => void | PromiseLike<void>;
+    (context: TContext) => false | void | PromiseLike<void | false>;
 
 /**
  * Options for `createWithServerProps()` function.
@@ -121,7 +123,12 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                     "nextContext": context
                 };
 
-                await enhanceContext?.(actionContext as unknown as TContext);
+                const shouldStop = ((await enhanceContext?.(actionContext as unknown as TContext)) as any) === false;
+                if (shouldStop) {
+                    return {
+                        "props": {}
+                    };
+                }
 
                 return await action(actionContext as unknown as TContext);
             }

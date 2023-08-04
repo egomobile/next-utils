@@ -26,9 +26,11 @@ import { asError } from "../utils/internal/asError";
  * Function that enhances an API context.
  *
  * @param {TContext} context The context to anhance.
+ *
+ * @returns {false|void|PromiseLike<void|false>} The `false`, the execution will be stopped.
  */
 export type EnhanceApiContext<TContext = IGetApiPropsActionContext<any>> =
-    (context: TContext) => void | PromiseLike<void>;
+    (context: TContext) => false | void | PromiseLike<void | false>;
 
 /**
  * An action for a `getProps` value of an `IWithApiPropsOptions` instance.
@@ -205,7 +207,10 @@ export function createWithApiProps<TContext = IGetApiPropsActionContext<any>>(
                         response
                     };
 
-                    await enhanceContext?.(getPropsContext as unknown as TContext);
+                    const shouldStop = ((await enhanceContext?.(getPropsContext as unknown as TContext)) as any) === false;
+                    if (shouldStop) {
+                        return;
+                    }
 
                     const propsResult: any = await getProps(getPropsContext as unknown as TContext);
 
