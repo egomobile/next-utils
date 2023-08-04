@@ -159,7 +159,7 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 
                 if (enhanceExecCtx.shouldStop) {
                     return {
-                        "props": enhanceExecCtx.props ?? {}
+                        ...(enhanceExecCtx.props ?? {})
                     };
                 }
 
