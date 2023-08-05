@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import deepmerge from "deepmerge";
 import { asAsync, toStringSafe } from "@egomobile/node-utils";
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import type { Nilable, Nullable } from "../types/internal";
 import type { IServerErrorHandlerContext, ServerErrorHandler, ServerMiddleware } from "../types";
 import { wrapServerHandler } from "../utils/internal/wrapServerHandler";
-import { deepMerge } from "../utils/internal/deepMerge";
 import { cloneObj } from "../utils/internal/cloneObj";
 
 
@@ -169,9 +169,11 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
 
                 const resultProps = await action(enhanceExecCtx.context as unknown as TContext);
 
-                return deepMerge(
-                    cloneObj(enhanceExecCtx.result),
-                    cloneObj(resultProps)
+                return cloneObj(
+                    deepmerge(
+                        cloneObj(enhanceExecCtx.result),
+                        cloneObj(resultProps)
+                    )
                 );
             }
             catch (ex: any) {
