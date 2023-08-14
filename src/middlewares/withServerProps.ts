@@ -131,16 +131,6 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
         null;
 
     return (action?, options?) => {
-        if (!action) {
-            return wrapServerHandler(async () => {
-                return {
-                    "props": {}
-                };
-            }, {
-                "use": options?.use
-            });
-        }
-
         return wrapServerHandler(async (context) => {
             try {
                 const actionContext: IWithServerPropsActionContext = {
@@ -167,7 +157,12 @@ export function createWithServerProps<TContext = IWithServerPropsActionContext>(
                     };
                 }
 
-                const resultProps = await action(enhanceExecCtx.context as unknown as TContext);
+                let resultProps = await action?.(enhanceExecCtx.context as unknown as TContext);
+                if (!resultProps) {
+                    resultProps = {
+                        "props": {}
+                    };
+                }
 
                 return cloneObj(
                     deepmerge(
