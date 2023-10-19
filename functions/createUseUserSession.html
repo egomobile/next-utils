@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>GetApiPropsActionResultValue | @egomobile/next-utils</title><meta name="description" content="Documentation for @egomobile/next-utils"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>createUseUserSession | @egomobile/next-utils</title><meta name="description" content="Documentation for @egomobile/next-utils"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -13,29 +13,32 @@
 <div class="tsd-page-title">
 <ul class="tsd-breadcrumb">
 <li><a href="../modules.html">@egomobile/next-utils</a></li>
-<li><a href="GetApiPropsActionResultValue.html">GetApiPropsActionResultValue</a></li></ul>
-<h1>Type alias GetApiPropsActionResultValue</h1></div>
-<div class="tsd-signature"><span class="tsd-kind-type-alias">Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Result<wbr/>Value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">props</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionProps.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionProps</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">badRequest</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionErrorResultValue.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionErrorResultValue</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">notFound</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionErrorResultValue.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionErrorResultValue</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
-<div class="tsd-comment tsd-typography"><p>Possible result value of a <code>GetApiPropsAction</code> call.</p>
+<li><a href="createUseUserSession.html">createUseUserSession</a></li></ul>
+<h1>Function createUseUserSession</h1></div>
+<section class="tsd-panel">
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="createUseUserSession"><span class="tsd-kind-call-signature">create<wbr/>Use<wbr/>User<wbr/>Session</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">TSessionProp</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">options</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/ICreateUseUserSessionResult.html" class="tsd-signature-type tsd-kind-interface">ICreateUseUserSessionResult</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">TSessionProp</span><span class="tsd-signature-symbol">&gt;</span><a href="#createUseUserSession" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Creates new <code>useUserSession()</code> and <code>useUser()</code> hooks.</p>
 </div>
-<div class="tsd-type-declaration">
-<h4>Type declaration</h4>
-<ul class="tsd-parameters">
-<li class="tsd-parameter">
-<h5><span class="tsd-kind-property">props</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionProps.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionProps</a></h5></li></ul></div>
-<div class="tsd-type-declaration">
-<h4>Type declaration</h4>
-<ul class="tsd-parameters">
-<li class="tsd-parameter">
-<h5><span class="tsd-kind-property">bad<wbr/>Request</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionErrorResultValue.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionErrorResultValue</a></h5></li></ul></div>
-<div class="tsd-type-declaration">
-<h4>Type declaration</h4>
-<ul class="tsd-parameters">
-<li class="tsd-parameter">
-<h5><span class="tsd-kind-property">not<wbr/>Found</span><span class="tsd-signature-symbol">: </span><a href="GetApiPropsActionErrorResultValue.html" class="tsd-signature-type tsd-kind-type-alias">GetApiPropsActionErrorResultValue</a></h5></li></ul></div>
+<section class="tsd-panel">
+<h4>Type Parameters</h4>
+<ul class="tsd-type-parameter-list">
+<li>
+<h4><span class="tsd-kind-type-parameter">TSessionProp</span><span class="tsd-signature-symbol"> extends </span><a href="../interfaces/IUserSessionProp.html" class="tsd-signature-type tsd-kind-interface">IUserSessionProp</a> = <a href="../interfaces/IUserSessionProp.html" class="tsd-signature-type tsd-kind-interface">IUserSessionProp</a></h4></li></ul></section>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">options</span>: <a href="../interfaces/ICreateUseUserSessionOptions.html" class="tsd-signature-type tsd-kind-interface">ICreateUseUserSessionOptions</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">TSessionProp</span><span class="tsd-signature-symbol">&gt;</span></h5>
+<div class="tsd-comment tsd-typography"><p>The options.</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="../interfaces/ICreateUseUserSessionResult.html" class="tsd-signature-type tsd-kind-interface">ICreateUseUserSessionResult</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">TSessionProp</span><span class="tsd-signature-symbol">&gt;</span></h4><p>The result with the new hooks.</p>
+
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/egomobile/next-utils/blob/6c345d4/src/middlewares/withApiProps.ts#L53">src/middlewares/withApiProps.ts:53</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/egomobile/next-utils/blob/6c345d4/src/hooks/sessions.ts#L225">src/hooks/sessions.ts:225</a></li></ul></aside></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -70,31 +73,31 @@
 <li><a href="../interfaces/IWithApiPropsOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>IWith<wbr/>Api<wbr/>Props<wbr/>Options</span></a></li>
 <li><a href="../interfaces/IWithServerPropsActionContext.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>IWith<wbr/>Server<wbr/>Props<wbr/>Action<wbr/>Context</span></a></li>
 <li><a href="../interfaces/IWithServerPropsOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-256"></use></svg><span>IWith<wbr/>Server<wbr/>Props<wbr/>Options</span></a></li>
-<li><a href="ApiMiddleware.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4194304"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-type-alias)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)"></path></g></svg><span>Api<wbr/>Middleware</span></a></li>
-<li><a href="EnhanceApiContext.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Enhance<wbr/>Api<wbr/>Context</span></a></li>
-<li><a href="EnhanceServerContext.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Enhance<wbr/>Server<wbr/>Context</span></a></li>
-<li><a href="GetApiPropsAction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action</span></a></li>
-<li><a href="GetApiPropsActionErrorResultValue.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Error<wbr/>Result<wbr/>Value</span></a></li>
-<li><a href="GetApiPropsActionProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Props</span></a></li>
-<li><a href="GetApiPropsActionResult.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Result</span></a></li>
-<li><a href="GetApiPropsActionResultValue.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Result<wbr/>Value</span></a></li>
-<li><a href="GetUserAvatarUrl.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>User<wbr/>Avatar<wbr/>Url</span></a></li>
-<li><a href="MiddlewareNextFunction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Middleware<wbr/>Next<wbr/>Function</span></a></li>
-<li><a href="ServerErrorHandler.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Server<wbr/>Error<wbr/>Handler</span></a></li>
-<li><a href="ServerMiddleware.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Server<wbr/>Middleware</span></a></li>
-<li><a href="UseUser.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User</span></a></li>
-<li><a href="UseUserHasGroupPredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Group<wbr/>Predicate</span></a></li>
-<li><a href="UseUserHasPermissionPredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Permission<wbr/>Predicate</span></a></li>
-<li><a href="UseUserHasRolePredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Role<wbr/>Predicate</span></a></li>
-<li><a href="UseUserSession.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Session</span></a></li>
-<li><a href="WithApiPropsFactory.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Api<wbr/>Props<wbr/>Factory</span></a></li>
-<li><a href="WithApiPropsHandler.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Api<wbr/>Props<wbr/>Handler</span></a></li>
-<li><a href="WithServerPropsAction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Server<wbr/>Props<wbr/>Action</span></a></li>
-<li><a href="WithServerPropsFactory.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Server<wbr/>Props<wbr/>Factory</span></a></li>
+<li><a href="../types/ApiMiddleware.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4194304"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-type-alias)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)"></path></g></svg><span>Api<wbr/>Middleware</span></a></li>
+<li><a href="../types/EnhanceApiContext.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Enhance<wbr/>Api<wbr/>Context</span></a></li>
+<li><a href="../types/EnhanceServerContext.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Enhance<wbr/>Server<wbr/>Context</span></a></li>
+<li><a href="../types/GetApiPropsAction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action</span></a></li>
+<li><a href="../types/GetApiPropsActionErrorResultValue.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Error<wbr/>Result<wbr/>Value</span></a></li>
+<li><a href="../types/GetApiPropsActionProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Props</span></a></li>
+<li><a href="../types/GetApiPropsActionResult.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Result</span></a></li>
+<li><a href="../types/GetApiPropsActionResultValue.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>Api<wbr/>Props<wbr/>Action<wbr/>Result<wbr/>Value</span></a></li>
+<li><a href="../types/GetUserAvatarUrl.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Get<wbr/>User<wbr/>Avatar<wbr/>Url</span></a></li>
+<li><a href="../types/MiddlewareNextFunction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Middleware<wbr/>Next<wbr/>Function</span></a></li>
+<li><a href="../types/ServerErrorHandler.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Server<wbr/>Error<wbr/>Handler</span></a></li>
+<li><a href="../types/ServerMiddleware.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Server<wbr/>Middleware</span></a></li>
+<li><a href="../types/UseUser.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User</span></a></li>
+<li><a href="../types/UseUserHasGroupPredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Group<wbr/>Predicate</span></a></li>
+<li><a href="../types/UseUserHasPermissionPredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Permission<wbr/>Predicate</span></a></li>
+<li><a href="../types/UseUserHasRolePredicate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Has<wbr/>Role<wbr/>Predicate</span></a></li>
+<li><a href="../types/UseUserSession.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Use<wbr/>User<wbr/>Session</span></a></li>
+<li><a href="../types/WithApiPropsFactory.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Api<wbr/>Props<wbr/>Factory</span></a></li>
+<li><a href="../types/WithApiPropsHandler.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Api<wbr/>Props<wbr/>Handler</span></a></li>
+<li><a href="../types/WithServerPropsAction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Server<wbr/>Props<wbr/>Action</span></a></li>
+<li><a href="../types/WithServerPropsFactory.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>With<wbr/>Server<wbr/>Props<wbr/>Factory</span></a></li>
 <li><a href="../variables/schema.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-32"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-variable)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.106 16L8.85 7.24H9.966L11.454 13.192C11.558 13.608 11.646 13.996 11.718 14.356C11.79 14.708 11.842 14.976 11.874 15.16C11.906 14.976 11.954 14.708 12.018 14.356C12.09 13.996 12.178 13.608 12.282 13.192L13.758 7.24H14.85L12.582 16H11.106Z" fill="var(--color-text)"></path></g></svg><span>schema</span></a></li>
-<li><a href="../functions/createUseUserSession.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-64"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)"></path></g></svg><span>create<wbr/>Use<wbr/>User<wbr/>Session</span></a></li>
-<li><a href="../functions/createWithApiProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>create<wbr/>With<wbr/>Api<wbr/>Props</span></a></li>
-<li><a href="../functions/createWithServerProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>create<wbr/>With<wbr/>Server<wbr/>Props</span></a></li></ul></nav></div></div></div>
+<li><a href="createUseUserSession.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-64"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)"></path></g></svg><span>create<wbr/>Use<wbr/>User<wbr/>Session</span></a></li>
+<li><a href="createWithApiProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>create<wbr/>With<wbr/>Api<wbr/>Props</span></a></li>
+<li><a href="createWithServerProps.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>create<wbr/>With<wbr/>Server<wbr/>Props</span></a></li></ul></nav></div></div></div>
 <div class="tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div></body></html>
