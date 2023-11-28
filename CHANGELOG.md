@@ -1,6 +1,10 @@
 # Change Log (@egomobile/next-utils)
 
-## 0.10.0
+## 0.11.0
+
+- `npm update`s
+
+## 0.10.6
 
 - **BREAKING CHANGE**: module requires at least [@egomobile/http-server 0.64+](https://github.com/egomobile/node-http-server) now
 
