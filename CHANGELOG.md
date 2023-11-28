@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.10.0
+
+- **BREAKING CHANGE**: module requires at least [@egomobile/http-server 0.64+](https://github.com/egomobile/node-http-server) now
+
 ## 0.9.4
 
 - **BREAKING CHANGE**: improve use of execution contextes of `EnhanceApiContext`
