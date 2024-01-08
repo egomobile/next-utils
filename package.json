@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/next-utils",
-    "version": "0.11.0",
+    "version": "0.12.0",
     "description": "Handy utils and extensions for Next.js",
     "main": "lib/index.js",
     "engines": {
@@ -48,7 +48,7 @@
         "functions"
     ],
     "dependencies": {
-        "@egomobile/api-utils": "^3.0.0",
+        "@egomobile/api-utils": "^5.0.1",
         "@egomobile/node-utils": "^0.3.0",
         "@egomobile/nodelike-utils": "^0.2.2",
         "@types/node": "18.11.9",

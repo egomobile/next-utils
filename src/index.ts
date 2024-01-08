@@ -24,3 +24,8 @@ export const schema = _schema as unknown as JoiRoot;
 export * from "./types";
 export * from "./middlewares";
 export * from "./hooks";
+
+export {
+    throwOnUnexpectedApiResponse,
+    UnexpectedApiResponseError
+} from "@egomobile/api-utils";
