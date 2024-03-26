@@ -1,5 +1,9 @@
 # Change Log (@egomobile/next-utils)
 
+## 0.13.0
+
+- `npm update`s
+
 ## 0.12.0
 
 - `npm update`s
